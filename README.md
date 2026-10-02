@@ -57,6 +57,23 @@ pytest                                         # tests (ceux de la base sont ign
 
 Réponses au format `{data, meta, error}`. Documentation interactive : `/docs`.
 
+## Apprentissage (`/api/v1`)
+
+| Méthode | Route | Description |
+| --- | --- | --- |
+| GET | `/programs`, `/programs/{slug}` | Catalogue public (le détail inclut la progression si connecté) |
+| POST | `/programs/{id}/enroll` | S'inscrire à un programme (idempotent) |
+| GET | `/me/enrollments`, `/me/next` | Mes programmes ; prochaine leçon à faire |
+| GET | `/lessons/{id}` | Leçon + contenus + activités (**sans les solutions**) |
+| POST | `/activities/{id}/submit` | Corrige, enregistre la tentative, recalcule la progression |
+
+Correction automatique : QCM, vrai/faux, texte à compléter, traduction, remise en ordre, association.
+Speaking / réponse libre : enregistrés mais non notés. Une leçon est terminée quand toutes ses
+activités sont réussies (au moins une tentative correcte, ou une tentative pour les non corrigées).
+
+Contenu de démonstration : `python -m app.seed` (lancé automatiquement par `docker compose`).
+⚠️ Provisoire : à faire relire par un enseignant d'anglais avant tout usage réel.
+
 ## Workflow Git
 
 `main` reste stable. Chaque gros changement vit dans sa branche, intégrée par PR :
@@ -69,7 +86,7 @@ Branches prévues (ordre de l'architecture, §71) :
 2. `feature/database-schema` — modèles + migration Alembic ✅
 3. `feature/auth` — inscription, connexion, rôles, profils ✅
 3b. `feature/frontend-auth` — pages inscription, connexion, tableau de bord ✅
-4. `feature/learning-engine` — programmes, cours, leçons, activités
+4. `feature/learning-engine` — programmes, cours, leçons, activités ✅
 5. `feature/placement-test` — évaluation, scoring, progression
 6. `feature/speaking-lab` — scénarios, audio, STT, feedback IA
 7. `feature/teacher-admin` — dashboards, CMS
