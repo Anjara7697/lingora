@@ -12,8 +12,6 @@ import { LEVEL_LABEL } from "@/lib/labels";
 import type { EnrollmentItem, NextStep } from "@/types/learning";
 import type { PlacementResult } from "@/types/placement";
 
-const SOON = [{ title: "Speaking Lab", text: "Pratiquez l'oral et recevez un feedback." }];
-
 export default function DashboardPage() {
   const allowed = useRequireAuth();
   const { user } = useAuth();
@@ -119,17 +117,16 @@ export default function DashboardPage() {
         </section>
       )}
 
-      <section className="grid gap-3 sm:grid-cols-2">
-        {SOON.map((item) => (
-          <article key={item.title} className="rounded-xl border border-zinc-200 bg-white p-4">
-            <h2 className="font-semibold text-zinc-900">{item.title}</h2>
-            <p className="mt-1 text-sm text-zinc-600">{item.text}</p>
-            <span className="mt-3 inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-500">
-              Bientôt
-            </span>
-          </article>
-        ))}
-      </section>
+      <Link
+        href="/speaking"
+        className="flex items-center justify-between rounded-xl border border-zinc-200 bg-white p-4 hover:border-indigo-400"
+      >
+        <span>
+          <span className="block font-semibold text-zinc-900">🎙️ Speaking Lab</span>
+          <span className="text-sm text-zinc-600">Pratiquez l&apos;oral et recevez un feedback.</span>
+        </span>
+        <span className="text-indigo-600">→</span>
+      </Link>
     </>
   );
 }

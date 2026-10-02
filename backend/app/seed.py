@@ -24,6 +24,7 @@ from app.modules.learning.models import (
     Skill,
 )
 from app.seed_placement import seed_placement
+from app.seed_speaking import seed_speaking
 
 T = ActivityType
 
@@ -310,6 +311,7 @@ def main() -> None:
     with SessionLocal() as db:
         seed_demo_content(db)
         seed_placement(db)
+        seed_speaking(db)
     print("Contenu de démonstration prêt.")
 
 

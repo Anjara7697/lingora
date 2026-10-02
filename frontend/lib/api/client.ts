@@ -1,7 +1,7 @@
 import { clearTokens, loadTokens, saveTokens } from "@/lib/auth/storage";
 import type { ApiErrorBody, Envelope, TokenPair } from "@/types/api";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+export const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export class ApiError extends Error {
   constructor(
@@ -19,7 +19,8 @@ export class ApiError extends Error {
 
 async function request(path: string, init: RequestInit, token?: string): Promise<Response> {
   const headers = new Headers(init.headers);
-  if (init.body) headers.set("Content-Type", "application/json");
+  // JSON par défaut ; pour FormData (upload) le navigateur fixe lui-même le Content-Type multipart.
+  if (typeof init.body === "string") headers.set("Content-Type", "application/json");
   if (token) headers.set("Authorization", `Bearer ${token}`);
   try {
     return await fetch(`${BASE_URL}/api/v1${path}`, { ...init, headers });

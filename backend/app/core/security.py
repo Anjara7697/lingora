@@ -11,7 +11,7 @@ _hasher = PasswordHasher()
 # Hash factice : vérifié quand l'email est inconnu, pour ne pas révéler son existence par le temps.
 DUMMY_HASH = _hasher.hash("lingora-dummy-password")
 
-TokenType = Literal["access", "refresh"]
+TokenType = Literal["access", "refresh", "media"]
 ALGORITHM = "HS256"
 
 
@@ -27,11 +27,12 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 
 def create_token(user_id: str, token_type: TokenType) -> str:
-    delta = (
-        timedelta(minutes=settings.access_token_minutes)
-        if token_type == "access"
-        else timedelta(days=settings.refresh_token_days)
-    )
+    """`user_id` est le sujet : un id utilisateur (access/refresh) ou un id de média (media)."""
+    delta = {
+        "access": timedelta(minutes=settings.access_token_minutes),
+        "refresh": timedelta(days=settings.refresh_token_days),
+        "media": timedelta(minutes=settings.media_token_minutes),  # URL signée à courte durée de vie
+    }[token_type]
     now = datetime.now(UTC)
     payload = {"sub": user_id, "type": token_type, "iat": now, "exp": now + delta}
     return jwt.encode(payload, settings.jwt_secret, algorithm=ALGORITHM)

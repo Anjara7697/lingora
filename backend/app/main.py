@@ -8,6 +8,7 @@ from app.modules.assessment.router import router as assessment_router
 from app.modules.auth.router import router as auth_router
 from app.modules.health.router import router as health_router
 from app.modules.learning.router import router as learning_router
+from app.modules.speaking.router import router as speaking_router
 from app.modules.users.router import router as users_router
 from app.shared.errors import register_error_handlers
 
@@ -36,4 +37,5 @@ api_v1.include_router(auth_router)
 api_v1.include_router(users_router)
 api_v1.include_router(learning_router)
 api_v1.include_router(assessment_router)
+api_v1.include_router(speaking_router)
 app.include_router(api_v1)

@@ -13,6 +13,13 @@ class Settings(BaseSettings):
     access_token_minutes: int = 30
     refresh_token_days: int = 7
     cors_origins: str = "http://localhost:3000"
+    # Speaking Lab
+    storage_dir: str = "./storage_data"
+    max_audio_bytes: int = 10 * 1024 * 1024
+    max_audio_seconds: int = 180
+    media_token_minutes: int = 5
+    ai_provider: str = "demo"
+    speaking_daily_limit: int = 20  # tentatives d'analyse IA par utilisateur et par jour
 
     def validate_for_runtime(self) -> None:
         if self.environment == "production" and self.jwt_secret == DEFAULT_JWT_SECRET:

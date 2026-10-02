@@ -93,6 +93,30 @@ La banque de questions est provisoire et doit être validée par un enseignant.
 
 Tests : ils utilisent leur propre base `<nom>_test`, créée et migrée automatiquement.
 
+## Speaking Lab (`/api/v1/speaking`)
+
+| Méthode | Route | Description |
+| --- | --- | --- |
+| GET | `/scenarios` | Situations disponibles (public) |
+| POST | `/sessions` | Ouvre (ou reprend) une session de pratique |
+| POST | `/sessions/{id}/turns` | **Une tentative** : audio (multipart) + durée + transcription → analyse |
+| POST | `/sessions/{id}/complete` | Feedback final + mise à jour de la progression orale |
+| GET | `/sessions/{id}` | Session, tentatives, feedback |
+| GET | `/media/{id}?token=…` | Réécoute d'un enregistrement via URL signée (5 min) |
+
+Architecture : `Router → Service → fournisseurs interchangeables` (`app/integrations/ai`, `app/integrations/storage`).
+La sortie brute de l'IA est **validée et normalisée** avant usage ; l'IA ne modifie jamais la progression
+directement : c'est une règle backend (lissage 70/30 sur le score de la compétence, historique conservé).
+Les fichiers audio sont hors de PostgreSQL (stockage local `STORAGE_DIR`, volume Docker `media`) et jamais publics.
+Garde-fous : formats/taille/durée limités, quota quotidien (`SPEAKING_DAILY_LIMIT`, défaut 20), usage IA journalisé
+(`events.ai_usage`), erreurs fournisseur masquées à l'utilisateur.
+
+**Mode démo (`AI_PROVIDER=demo`, par défaut)** : aucune clé d'API. Pas de vraie reconnaissance vocale : la
+transcription vient du navigateur (Chrome/Edge) ou est saisie par l'utilisateur, puis analysée par des règles simples
+(grammaire des erreurs fréquentes, vocabulaire, fluidité, pertinence). **La prononciation n'est pas évaluée.**
+Pour un vrai fournisseur : implémenter `SpeechToText` / `SpeakingAnalyzer` (`integrations/ai/base.py`) et l'enregistrer
+dans `integrations/ai/__init__.py`.
+
 ## Workflow Git
 
 `main` reste stable. Chaque gros changement vit dans sa branche, intégrée par PR :
@@ -107,6 +131,6 @@ Branches prévues (ordre de l'architecture, §71) :
 3b. `feature/frontend-auth` — pages inscription, connexion, tableau de bord ✅
 4. `feature/learning-engine` — programmes, cours, leçons, activités ✅
 5. `feature/placement-test` — onboarding, test de niveau, scoring ✅
-6. `feature/speaking-lab` — scénarios, audio, STT, feedback IA
+6. `feature/speaking-lab` — scénarios, audio, STT, feedback IA (mode démo) ✅
 7. `feature/teacher-admin` — dashboards, CMS
 8. `feature/billing` — plans, abonnements, paiements, notifications
