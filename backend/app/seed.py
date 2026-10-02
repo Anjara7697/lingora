@@ -307,11 +307,33 @@ def _seed_lesson(db: Session, course: Course, position: int, data: dict) -> None
         activity.difficulty = Difficulty.BEGINNER
 
 
+DEMO_STAFF = [
+    ("teacher.demo@example.com", "TEACHER", "Teacher-demo-1", "Hanta", "Enseignante"),
+    ("admin.demo@example.com", "ADMIN", "Admin-demo-1", "Admin", "Lingora"),
+]
+
+
+def seed_demo_staff(db: Session) -> None:
+    """Comptes de démonstration, UNIQUEMENT en développement (mots de passe publics dans le dépôt)."""
+    from sqlalchemy import select
+
+    from app.cli import create_user
+    from app.core.config import settings
+    from app.modules.identity.models import User
+
+    if settings.environment != "development":
+        return
+    for email, role, password, first, last in DEMO_STAFF:
+        if not db.scalar(select(User).where(User.email == email)):
+            create_user(db, email, role, password, first, last)
+
+
 def main() -> None:
     with SessionLocal() as db:
         seed_demo_content(db)
         seed_placement(db)
         seed_speaking(db)
+        seed_demo_staff(db)
     print("Contenu de démonstration prêt.")
 
 

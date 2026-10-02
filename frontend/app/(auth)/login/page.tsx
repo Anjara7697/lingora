@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { Button, Field } from "@/components/ui/Field";
 import { useAuth } from "@/features/auth/AuthProvider";
+import { homeFor } from "@/features/auth/roles";
 import { useGuestRedirect } from "@/features/auth/useGuestRedirect";
 import { ApiError } from "@/lib/api/client";
 import { validateEmail } from "@/lib/validations/auth";
@@ -34,8 +35,8 @@ export default function LoginPage() {
 
     setSubmitting(true);
     try {
-      await login(email, password);
-      router.replace("/dashboard");
+      const user = await login(email, password);
+      router.replace(homeFor(user.role));
     } catch (err) {
       setFormError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
       setSubmitting(false);

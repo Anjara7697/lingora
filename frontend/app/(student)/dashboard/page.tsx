@@ -5,15 +5,18 @@ import { useEffect, useState } from "react";
 
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { useAuth } from "@/features/auth/AuthProvider";
-import { useRequireAuth } from "@/features/auth/useRequireAuth";
+import { useRequireRole } from "@/features/auth/useRequireRole";
 import { myEnrollments, nextStep } from "@/lib/api/learning";
 import { latestPlacementResult } from "@/lib/api/placement";
 import { LEVEL_LABEL } from "@/lib/labels";
+import type { Role } from "@/types/api";
 import type { EnrollmentItem, NextStep } from "@/types/learning";
 import type { PlacementResult } from "@/types/placement";
 
+const STUDENT_ONLY: Role[] = ["STUDENT"];
+
 export default function DashboardPage() {
-  const allowed = useRequireAuth();
+  const allowed = useRequireRole(STUDENT_ONLY);
   const { user } = useAuth();
   const [next, setNext] = useState<NextStep | null>(null);
   const [enrollments, setEnrollments] = useState<EnrollmentItem[] | null>(null);
