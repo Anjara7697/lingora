@@ -1,7 +1,12 @@
+# Développement local. Aucun fichier .env n'est nécessaire : tout a une valeur par défaut.
+# Pour personnaliser, créez un .env (voir .env.example) : Compose le lit automatiquement.
 services:
   db:
     image: postgres:16
-    env_file: .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-lingora}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lingora}
+      POSTGRES_DB: ${POSTGRES_DB:-lingora}
     ports: ["5432:5432"]
     volumes: [pgdata:/var/lib/postgresql/data]
     healthcheck:
@@ -11,7 +16,10 @@ services:
 
   backend:
     build: ./backend
-    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://lingora:lingora@db:5432/lingora}
+      JWT_SECRET: ${JWT_SECRET:-dev-only-insecure-secret-change-me-please}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
     ports: ["8000:8000"]
     depends_on:
       db: { condition: service_healthy }
@@ -20,7 +28,8 @@ services:
 
   frontend:
     build: ./frontend
-    env_file: .env
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
     ports: ["3000:3000"]
     depends_on: [backend]
 
