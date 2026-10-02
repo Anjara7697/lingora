@@ -146,6 +146,30 @@ docker compose exec backend python -m app.cli create-user prof@example.com --rol
 docker compose exec backend python -m app.cli set-role eleve@example.com TEACHER
 ```
 
+## Administration (`/api/v1/admin`, permission `users.manage` = ADMIN uniquement)
+
+Les autorisations viennent de la base (tables `roles` / `permissions` / `role_permissions`, via `require_permission`).
+
+| Méthode | Route | Description |
+| --- | --- | --- |
+| GET / POST | `/admin/users` | Liste (recherche, rôle, statut, pagination) / création d'un utilisateur (enseignant, admin…) |
+| PATCH | `/admin/users/{id}` | Changer le rôle, **suspendre / réactiver** (effet immédiat, y compris sur les jetons déjà émis), renommer |
+| POST | `/admin/users/{id}/password` | Réinitialiser le mot de passe (en attendant la récupération par email) |
+| GET | `/admin/teachers`, `/admin/teachers/{id}/roster` | Enseignants avec nombre d'élèves ; élèves assignés / disponibles |
+| POST / DELETE | `/admin/teachers/{id}/students[/{student}]` | Assigner (idempotent) / retirer des élèves |
+| GET | `/admin/analytics` | Statistiques produit |
+
+Garde-fous : on ne peut pas modifier son propre rôle ou statut, ni retirer le dernier administrateur actif ;
+passer un enseignant en élève retire ses élèves ; toute opération sensible écrit dans `audit_logs`
+(acteur, action, anciennes/nouvelles valeurs, jamais de mot de passe). Il n'y a pas de suppression de compte : on suspend.
+
+Statistiques (`admin/analytics.py`, calculées à la demande, définitions renvoyées dans la réponse) :
+indicateur principal du PRD (**élèves actifs sur 30 jours avec une progression mesurable**), élèves actifs 7/30 j,
+nouveaux inscrits, tunnel d'activation (inscrit → onboarding → test de niveau → première leçon → première session d'oral),
+activité d'oral et appels IA, séries sur 14 jours.
+
+Les assignations se font maintenant dans l'interface (**Admin → Enseignants**) ; la CLI `app.cli` reste disponible.
+
 ## Workflow Git
 
 `main` reste stable. Chaque gros changement vit dans sa branche, intégrée par PR :
@@ -162,5 +186,6 @@ Branches prévues (ordre de l'architecture, §71) :
 5. `feature/placement-test` — onboarding, test de niveau, scoring ✅
 6. `feature/speaking-lab` — scénarios, audio, STT, feedback IA (mode démo) ✅
 7. `feature/teacher-space` — espace enseignant, feedback humain, notifications ✅
-7b. `feature/admin-cms` — administration, CMS de contenu
+7b. `feature/admin-users` — utilisateurs, rôles, assignations, statistiques ✅
+7c. `feature/cms-content` — création/édition des programmes, cours, leçons, exercices, situations d'oral
 8. `feature/billing` — plans, abonnements, paiements, notifications
