@@ -24,9 +24,11 @@ Prérequis : Docker (avec Compose). Aucun autre outil à installer.
 
 ```bash
 git checkout main && git pull
-cp .env.example .env
 docker compose up --build
 ```
+
+Aucun fichier `.env` n'est nécessaire en développement (valeurs par défaut incluses). Pour personnaliser :
+`cp .env.example .env` (Linux/macOS) ou `copy .env.example .env` (Windows), puis éditez-le.
 
 Puis ouvrez http://localhost:3000 : créez un compte, déconnectez-vous, reconnectez-vous.
 L'API est sur http://localhost:8000/docs. Pour repartir de zéro : `docker compose down -v`.
