@@ -31,6 +31,19 @@ alembic check                                  # vérifie qu'aucune migration ne
 pytest                                         # tests (ceux de la base sont ignorés sans PostgreSQL)
 ```
 
+## API d'authentification (`/api/v1`)
+
+| Méthode | Route | Description |
+| --- | --- | --- |
+| POST | `/auth/register` | Crée un compte STUDENT, retourne l'utilisateur + jetons |
+| POST | `/auth/login` | Connexion email / mot de passe |
+| POST | `/auth/refresh` | Nouveau couple de jetons à partir du refresh token |
+| POST | `/auth/logout` | Sans état : le client supprime ses jetons |
+| GET / PATCH | `/me` | Profil de l'utilisateur connecté |
+| POST | `/me/password` | Changer son mot de passe |
+
+Réponses au format `{data, meta, error}`. Documentation interactive : `/docs`.
+
 ## Workflow Git
 
 `main` reste stable. Chaque gros changement vit dans sa branche, intégrée par PR :
@@ -41,7 +54,7 @@ Branches prévues (ordre de l'architecture, §71) :
 
 1. `chore/project-foundation` — repo, Docker, FastAPI, Next.js ✅
 2. `feature/database-schema` — modèles + migration Alembic ✅
-3. `feature/auth` — inscription, connexion, rôles, profils
+3. `feature/auth` — inscription, connexion, rôles, profils ✅
 4. `feature/learning-engine` — programmes, cours, leçons, activités
 5. `feature/placement-test` — évaluation, scoring, progression
 6. `feature/speaking-lab` — scénarios, audio, STT, feedback IA
