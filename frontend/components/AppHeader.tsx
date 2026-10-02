@@ -10,11 +10,11 @@ export function AppHeader() {
   const router = useRouter();
   return (
     <header className="border-b border-zinc-200 bg-white">
-      <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-4 py-3">
+      <div className="mx-auto flex w-full max-w-3xl flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3">
         <Link href={user ? "/dashboard" : "/"} className="text-lg font-bold text-zinc-900">
           Lingora
         </Link>
-        <nav className="flex items-center gap-4 text-sm font-medium">
+        <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-medium">
           {user && (
             <Link href="/dashboard" className="whitespace-nowrap text-zinc-700 hover:text-indigo-600">
               Tableau de bord
@@ -22,6 +22,9 @@ export function AppHeader() {
           )}
           <Link href="/programs" className="text-zinc-700 hover:text-indigo-600">
             Programmes
+          </Link>
+          <Link href="/speaking" className="text-zinc-700 hover:text-indigo-600">
+            Speaking
           </Link>
           {status === "authenticated" ? (
             <button

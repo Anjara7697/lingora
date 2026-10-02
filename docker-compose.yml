@@ -20,10 +20,12 @@ services:
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://lingora:lingora@db:5432/lingora}
       JWT_SECRET: ${JWT_SECRET:-dev-only-insecure-secret-change-me-please}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      STORAGE_DIR: /data/storage
+      AI_PROVIDER: ${AI_PROVIDER:-demo}
     ports: ["8000:8000"]
     depends_on:
       db: { condition: service_healthy }
-    volumes: ["./backend:/app"]
+    volumes: ["./backend:/app", "media:/data/storage"]
     command: sh -c "alembic upgrade head && python -m app.seed && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
   frontend:
@@ -35,3 +37,4 @@ services:
 
 volumes:
   pgdata:
+  media:  # enregistrements audio du Speaking Lab (jamais dans Git)
