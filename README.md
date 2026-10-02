@@ -117,6 +117,35 @@ transcription vient du navigateur (Chrome/Edge) ou est saisie par l'utilisateur,
 Pour un vrai fournisseur : implémenter `SpeechToText` / `SpeakingAnalyzer` (`integrations/ai/base.py`) et l'enregistrer
 dans `integrations/ai/__init__.py`.
 
+## Espace enseignant (`/api/v1/teacher`)
+
+Réservé aux rôles TEACHER et ADMIN. Un enseignant ne voit **que les élèves qui lui sont assignés**
+(table `teacher_students`) ; un élève d'un autre enseignant répond 404, jamais 403. L'ADMIN voit tous les élèves.
+
+| Méthode | Route | Description |
+| --- | --- | --- |
+| GET | `/teacher/dashboard` | Élèves, actifs 7 j, progression moyenne, répartition par statut, élèves à suivre |
+| GET | `/teacher/students?search=&status=` | Liste filtrable |
+| GET | `/teacher/students/{id}` | Fiche : compétences, programmes, sessions d'oral, exercices récents, tests de niveau, feedback |
+| GET | `/teacher/students/{id}/speaking/{session}` | Tentatives : transcription, audio (URL signée), analyse IA |
+| POST | `/teacher/students/{id}/feedback` | Feedback humain (+ note optionnelle, session d'oral liée) → notification à l'élève |
+| GET | `/me/notifications`, `/me/teacher-feedback` | Côté élève (+ `POST /me/notifications/{id}/read`, `/read-all`) |
+
+Statut d'un élève (`teacher/service.py::classify`) : **Inactif** (≥ 14 j sans activité, ou jamais actif depuis > 7 j),
+**Faible activité** (≥ 7 j), **Difficulté à l'oral** (score oral < 50), sinon **Progression normale** ; **Nouveau** si jamais actif depuis < 7 j.
+Un feedback lié à une session d'oral marque le feedback IA comme relu par l'enseignant (`reviewed_by`).
+
+**Comptes de démonstration (développement uniquement, jamais créés si `ENVIRONMENT=production`)** :
+`teacher.demo@example.com` / `Teacher-demo-1` et `admin.demo@example.com` / `Admin-demo-1`.
+Pour assigner des élèves (en attendant l'interface d'administration) :
+
+```bash
+docker compose exec backend python -m app.cli assign-all teacher.demo@example.com
+docker compose exec backend python -m app.cli assign teacher.demo@example.com eleve@example.com
+docker compose exec backend python -m app.cli create-user prof@example.com --role TEACHER --password '...'
+docker compose exec backend python -m app.cli set-role eleve@example.com TEACHER
+```
+
 ## Workflow Git
 
 `main` reste stable. Chaque gros changement vit dans sa branche, intégrée par PR :
@@ -132,5 +161,6 @@ Branches prévues (ordre de l'architecture, §71) :
 4. `feature/learning-engine` — programmes, cours, leçons, activités ✅
 5. `feature/placement-test` — onboarding, test de niveau, scoring ✅
 6. `feature/speaking-lab` — scénarios, audio, STT, feedback IA (mode démo) ✅
-7. `feature/teacher-admin` — dashboards, CMS
+7. `feature/teacher-space` — espace enseignant, feedback humain, notifications ✅
+7b. `feature/admin-cms` — administration, CMS de contenu
 8. `feature/billing` — plans, abonnements, paiements, notifications

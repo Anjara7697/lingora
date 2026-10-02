@@ -8,5 +8,6 @@ from app.modules.learning import models as _learning  # noqa: F401
 from app.modules.platform import models as _platform  # noqa: F401
 from app.modules.progress import models as _progress  # noqa: F401
 from app.modules.speaking import models as _speaking  # noqa: F401
+from app.modules.teacher import models as _teacher  # noqa: F401
 
 __all__ = ["Base"]

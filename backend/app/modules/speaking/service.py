@@ -141,8 +141,8 @@ def _turns(db: Session, session_id: uuid.UUID) -> list[dict]:
     return [_turn_view(t, a, tr) for t, a, tr in rows]
 
 
-def get_session_detail(db: Session, user: User, session_id: uuid.UUID) -> dict:
-    session = _own_session(db, user, session_id)
+def session_view(db: Session, session: SpeakingSession) -> dict:
+    """Session + scénario + tentatives + feedback IA (sans notion de quota : sert aussi à l'enseignant)."""
     scenario = db.get(SpeakingScenario, session.scenario_id)
     turns = _turns(db, session.id)
     feedback = db.scalar(select(SpeakingFeedback).where(SpeakingFeedback.session_id == session.id))
@@ -151,6 +151,13 @@ def get_session_detail(db: Session, user: User, session_id: uuid.UUID) -> dict:
         "scenario": scenario,
         "turns": turns,
         "feedback": _feedback_view(feedback, turns) if feedback else None,
+    }
+
+
+def get_session_detail(db: Session, user: User, session_id: uuid.UUID) -> dict:
+    session = _own_session(db, user, session_id)
+    return {
+        **session_view(db, session),
         "attempts_left_today": max(0, settings.speaking_daily_limit - attempts_today(db, user)),
     }
 
