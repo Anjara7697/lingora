@@ -7,27 +7,32 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { useRequireAuth } from "@/features/auth/useRequireAuth";
 import { myEnrollments, nextStep } from "@/lib/api/learning";
+import { latestPlacementResult } from "@/lib/api/placement";
+import { LEVEL_LABEL } from "@/lib/labels";
 import type { EnrollmentItem, NextStep } from "@/types/learning";
+import type { PlacementResult } from "@/types/placement";
 
-const SOON = [
-  { title: "Test de niveau", text: "Découvrez votre niveau d'anglais (A1 → C2)." },
-  { title: "Speaking Lab", text: "Pratiquez l'oral et recevez un feedback." },
-];
+const SOON = [{ title: "Speaking Lab", text: "Pratiquez l'oral et recevez un feedback." }];
 
 export default function DashboardPage() {
   const allowed = useRequireAuth();
   const { user } = useAuth();
   const [next, setNext] = useState<NextStep | null>(null);
   const [enrollments, setEnrollments] = useState<EnrollmentItem[] | null>(null);
+  const [placement, setPlacement] = useState<PlacementResult | null | undefined>(undefined);
 
   useEffect(() => {
     if (!allowed) return;
-    Promise.all([nextStep(), myEnrollments()])
-      .then(([n, e]) => {
+    Promise.all([nextStep(), myEnrollments(), latestPlacementResult()])
+      .then(([n, e, p]) => {
         setNext(n);
         setEnrollments(e);
+        setPlacement(p);
       })
-      .catch(() => setEnrollments([]));
+      .catch(() => {
+        setEnrollments([]);
+        setPlacement(null);
+      });
   }, [allowed]);
 
   if (!allowed || !user) return <p className="text-zinc-500">Chargement…</p>;
@@ -36,6 +41,31 @@ export default function DashboardPage() {
     <>
       <h1 className="text-2xl font-bold text-zinc-900">Bonjour {user.first_name} 👋</h1>
       <p className="mb-6 text-sm text-zinc-500">{user.email}</p>
+
+      {placement === null && (
+        <section className="mb-6 rounded-xl border border-indigo-200 bg-white p-5">
+          <h2 className="font-semibold text-zinc-900">Passez le test de niveau</h2>
+          <p className="mt-1 text-sm text-zinc-600">25 questions, environ 10 minutes, pour estimer votre niveau.</p>
+          <Link
+            href="/placement"
+            className="mt-3 inline-block rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white hover:bg-indigo-700"
+          >
+            Commencer le test
+          </Link>
+        </section>
+      )}
+      {placement && (
+        <Link
+          href="/placement/result"
+          className="mb-6 flex items-center justify-between rounded-xl border border-zinc-200 bg-white p-4 hover:border-indigo-400"
+        >
+          <span>
+            <span className="block text-xs uppercase tracking-wide text-zinc-500">Mon niveau</span>
+            <span className="font-semibold text-zinc-900">{LEVEL_LABEL[placement.overall_level]}</span>
+          </span>
+          <span className="rounded-full bg-indigo-600 px-3 py-1 text-lg font-bold text-white">{placement.overall_level}</span>
+        </Link>
+      )}
 
       {enrollments && enrollments.length === 0 && (
         <section className="mb-6 rounded-xl bg-indigo-50 p-5">

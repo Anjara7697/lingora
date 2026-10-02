@@ -20,7 +20,7 @@ from app.modules.learning.models import ActivityType
 
 MCQ_LIKE = {ActivityType.MCQ, ActivityType.LISTENING, ActivityType.READING}
 TEXT_LIKE = {ActivityType.FILL_BLANK, ActivityType.TRANSLATION}
-SECRET_KEYS = {"correct_answer", "correct_answers", "correct_order", "explanation"}
+SECRET_KEYS = {"correct_answer", "correct_answers", "correct_order", "explanation", "cefr", "skill"}
 
 
 @dataclass

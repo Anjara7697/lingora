@@ -11,12 +11,12 @@ import { ApiError } from "@/lib/api/client";
 import { validateEmail } from "@/lib/validations/auth";
 
 export default function LoginPage() {
-  useGuestRedirect();
   const { login } = useAuth();
   const router = useRouter();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  useGuestRedirect(!submitting);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
