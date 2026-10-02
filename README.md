@@ -18,6 +18,19 @@ docker compose up --build
 Sans Docker : `cd backend && pip install -e ".[dev]" && uvicorn app.main:app --reload`
 et `cd frontend && npm install && npm run dev`.
 
+## Tester sur votre machine
+
+Prérequis : Docker (avec Compose). Aucun autre outil à installer.
+
+```bash
+git checkout main && git pull
+cp .env.example .env
+docker compose up --build
+```
+
+Puis ouvrez http://localhost:3000 : créez un compte, déconnectez-vous, reconnectez-vous.
+L'API est sur http://localhost:8000/docs. Pour repartir de zéro : `docker compose down -v`.
+
 ## Base de données
 
 Schéma PostgreSQL : 46 tables réparties en 8 domaines (`backend/app/modules/*/models.py`),
@@ -55,6 +68,7 @@ Branches prévues (ordre de l'architecture, §71) :
 1. `chore/project-foundation` — repo, Docker, FastAPI, Next.js ✅
 2. `feature/database-schema` — modèles + migration Alembic ✅
 3. `feature/auth` — inscription, connexion, rôles, profils ✅
+3b. `feature/frontend-auth` — pages inscription, connexion, tableau de bord ✅
 4. `feature/learning-engine` — programmes, cours, leçons, activités
 5. `feature/placement-test` — évaluation, scoring, progression
 6. `feature/speaking-lab` — scénarios, audio, STT, feedback IA
