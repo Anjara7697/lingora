@@ -11,12 +11,12 @@ import { ApiError } from "@/lib/api/client";
 import { validateEmail, validatePassword } from "@/lib/validations/auth";
 
 export default function RegisterPage() {
-  useGuestRedirect();
   const { register } = useAuth();
   const router = useRouter();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  useGuestRedirect(!submitting);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -47,7 +47,7 @@ export default function RegisterPage() {
     setSubmitting(true);
     try {
       await register(input);
-      router.replace("/dashboard");
+      router.replace("/onboarding");
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.body.code === "EMAIL_ALREADY_USED") {

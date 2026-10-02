@@ -74,6 +74,23 @@ activités sont réussies (au moins une tentative correcte, ou une tentative pou
 Contenu de démonstration : `python -m app.seed` (lancé automatiquement par `docker compose`).
 ⚠️ Provisoire : à faire relire par un enseignant d'anglais avant tout usage réel.
 
+## Test de niveau (`/api/v1`)
+
+| Méthode | Route | Description |
+| --- | --- | --- |
+| PUT / GET | `/me/onboarding` | Objectif principal + minutes par jour |
+| POST | `/placement/start` | Démarre (ou reprend) le test : 25 questions, sans aucun indice |
+| PUT | `/placement/{attempt}/answers/{question}` | Enregistre / modifie une réponse |
+| POST | `/placement/{attempt}/complete` | Corrige, calcule les niveaux, met à jour profil et progression |
+| GET | `/placement/result`, `/placement/{attempt}/result` | Dernier résultat / un résultat précis |
+
+Niveau CECRL estimé **par compétence** (grammaire, vocabulaire, lecture) et global : un niveau est validé
+à ≥ 50 % de réussite, on s'arrête au premier niveau non validé (`assessment/level.py`). Chaque test est
+conservé (historique) ; refaire le test ne réécrit jamais l'ancien. Pas encore de Listening ni de Speaking.
+La banque de questions est provisoire et doit être validée par un enseignant.
+
+Tests : ils utilisent leur propre base `<nom>_test`, créée et migrée automatiquement.
+
 ## Workflow Git
 
 `main` reste stable. Chaque gros changement vit dans sa branche, intégrée par PR :
@@ -87,7 +104,7 @@ Branches prévues (ordre de l'architecture, §71) :
 3. `feature/auth` — inscription, connexion, rôles, profils ✅
 3b. `feature/frontend-auth` — pages inscription, connexion, tableau de bord ✅
 4. `feature/learning-engine` — programmes, cours, leçons, activités ✅
-5. `feature/placement-test` — évaluation, scoring, progression
+5. `feature/placement-test` — onboarding, test de niveau, scoring ✅
 6. `feature/speaking-lab` — scénarios, audio, STT, feedback IA
 7. `feature/teacher-admin` — dashboards, CMS
 8. `feature/billing` — plans, abonnements, paiements, notifications

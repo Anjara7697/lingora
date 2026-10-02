@@ -23,6 +23,7 @@ from app.modules.learning.models import (
     Program,
     Skill,
 )
+from app.seed_placement import seed_placement
 
 T = ActivityType
 
@@ -308,6 +309,7 @@ def _seed_lesson(db: Session, course: Course, position: int, data: dict) -> None
 def main() -> None:
     with SessionLocal() as db:
         seed_demo_content(db)
+        seed_placement(db)
     print("Contenu de démonstration prêt.")
 
 
