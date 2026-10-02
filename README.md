@@ -18,6 +18,19 @@ docker compose up --build
 Sans Docker : `cd backend && pip install -e ".[dev]" && uvicorn app.main:app --reload`
 et `cd frontend && npm install && npm run dev`.
 
+## Base de données
+
+Schéma PostgreSQL : 46 tables réparties en 8 domaines (`backend/app/modules/*/models.py`),
+conformément à `docs/04-Modele-Donnees-PostgreSQL.md`. Migrations Alembic :
+
+```bash
+cd backend
+alembic upgrade head                           # appliquer (fait automatiquement par docker compose)
+alembic revision --autogenerate -m "message"   # nouvelle migration après modif des modèles
+alembic check                                  # vérifie qu'aucune migration ne manque
+pytest                                         # tests (ceux de la base sont ignorés sans PostgreSQL)
+```
+
 ## Workflow Git
 
 `main` reste stable. Chaque gros changement vit dans sa branche, intégrée par PR :
@@ -26,8 +39,8 @@ et `cd frontend && npm install && npm run dev`.
 
 Branches prévues (ordre de l'architecture, §71) :
 
-1. `chore/project-foundation` — repo, Docker, FastAPI, Next.js *(ce commit)*
-2. `feature/database-schema` — migrations Alembic (Identity, Learning…)
+1. `chore/project-foundation` — repo, Docker, FastAPI, Next.js ✅
+2. `feature/database-schema` — modèles + migration Alembic ✅
 3. `feature/auth` — inscription, connexion, rôles, profils
 4. `feature/learning-engine` — programmes, cours, leçons, activités
 5. `feature/placement-test` — évaluation, scoring, progression
