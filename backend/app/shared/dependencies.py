@@ -38,3 +38,20 @@ def require_roles(*roles: UserRole):
         return user
 
     return checker
+
+
+def get_optional_user(
+    db: DbSession,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
+) -> User | None:
+    """Utilisateur connecté s'il y en a un ; None pour un visiteur (jeton absent ou invalide)."""
+    if credentials is None:
+        return None
+    user_id = decode_token(credentials.credentials, "access")
+    user = db.get(User, user_id) if user_id else None
+    if user is None or user.deleted_at is not None or user.status != UserStatus.ACTIVE:
+        return None
+    return user
+
+
+OptionalUser = Annotated[User | None, Depends(get_optional_user)]

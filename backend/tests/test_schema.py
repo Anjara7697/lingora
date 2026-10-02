@@ -37,7 +37,7 @@ def test_user_defaults_are_generated_by_database(db):
 
 def test_one_enrollment_per_student_and_program(db):
     u, p = make_user("e@example.com"), Program(
-        name="English Speaking", slug="english-speaking", difficulty=Difficulty.BEGINNER
+        name="Schema test", slug="schema-test-program", difficulty=Difficulty.BEGINNER
     )
     db.add_all([u, p])
     db.flush()

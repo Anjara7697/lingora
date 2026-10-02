@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.modules.auth.router import router as auth_router
 from app.modules.health.router import router as health_router
+from app.modules.learning.router import router as learning_router
 from app.modules.users.router import router as users_router
 from app.shared.errors import register_error_handlers
 
@@ -32,4 +33,5 @@ app.include_router(health_router)
 api_v1 = APIRouter(prefix="/api/v1")
 api_v1.include_router(auth_router)
 api_v1.include_router(users_router)
+api_v1.include_router(learning_router)
 app.include_router(api_v1)
