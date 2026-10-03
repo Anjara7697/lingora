@@ -1,79 +1,111 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
-import { Button } from "@/components/ui/Field";
+import { Button } from "@/components/ui/Button";
+import { FieldError, inputClass } from "@/components/ui/Field";
+import { Notice } from "@/components/ui/Notice";
 import { sendFeedback } from "@/lib/api/teacher";
 import type { FeedbackItem } from "@/types/teacher";
 
 interface Props {
   studentId: string;
+  studentFirstName: string;
   sessionId?: string;
   onCreated: (item: FeedbackItem) => void;
 }
 
-export function FeedbackForm({ studentId, sessionId, onCreated }: Props) {
+const MAX = 2000;
+
+export function FeedbackForm({ studentId, studentFirstName, sessionId, onCreated }: Props) {
   const [comment, setComment] = useState("");
   const [score, setScore] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
+  const area = useRef<HTMLTextAreaElement>(null);
+
+  const scoreNum = score === "" ? null : Number(score);
+  const scoreInvalid = scoreNum !== null && (!Number.isInteger(scoreNum) || scoreNum < 0 || scoreNum > 100);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (busy || !comment.trim() || scoreInvalid) return;
     setBusy(true);
     setError(null);
+    setSent(false);
     try {
       const item = await sendFeedback(studentId, {
         comment: comment.trim(),
-        score: score === "" ? null : Number(score),
+        score: scoreNum,
         speaking_session_id: sessionId ?? null,
       });
       onCreated(item);
       setComment("");
       setScore("");
+      setSent(true);
+      area.current?.focus();
     } catch (err) {
-      setError((err as Error).message);
+      // le texte saisi est conservé : le professeur peut réessayer sans tout retaper
+      setError((err as Error).message || "Le retour n'a pas pu être envoyé.");
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <form onSubmit={submit} className="grid gap-3 rounded-xl border border-zinc-200 bg-white p-4">
-      <h3 className="font-semibold text-zinc-900">Écrire un feedback</h3>
-      <label className="grid gap-1 text-sm">
-        <span className="font-medium text-zinc-800">Commentaire</span>
+    <form onSubmit={submit} className="flex flex-col gap-3.5 rounded-lg bg-surface p-4 shadow-card">
+      <h3 className="font-display text-lg font-bold text-ink">Écrire un retour</h3>
+      {sessionId && <p className="text-[13px] text-muted">Envoyer un retour marque l&apos;analyse automatique comme relue.</p>}
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="fb-comment" className="text-sm font-semibold text-ink">
+          Commentaire
+        </label>
         <textarea
+          id="fb-comment"
+          ref={area}
           value={comment}
-          onChange={(e) => setComment(e.target.value)}
-          rows={4}
-          maxLength={2000}
-          className="rounded-lg border border-zinc-300 px-3 py-2 text-base"
+          onChange={(e) => {
+            setComment(e.target.value);
+            setSent(false);
+          }}
+          rows={5}
+          maxLength={MAX}
+          className={`${inputClass} h-auto py-3 leading-[1.5]`}
           placeholder="Points forts, corrections, conseils…"
         />
-      </label>
-      <label className="grid gap-1 text-sm sm:w-40">
-        <span className="font-medium text-zinc-800">Note (optionnelle, /100)</span>
+        <p className="text-right text-xs tabular-nums text-muted">
+          {comment.length} / {MAX}
+        </p>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="fb-score" className="text-sm font-semibold text-ink">
+          Note sur 100 (facultative)
+        </label>
         <input
+          id="fb-score"
           type="number"
-          min={0}
-          max={100}
+          inputMode="numeric"
           value={score}
           onChange={(e) => setScore(e.target.value)}
-          className="rounded-lg border border-zinc-300 px-3 py-2 text-base"
+          aria-invalid={scoreInvalid || undefined}
+          aria-describedby={scoreInvalid ? "fb-score-error" : undefined}
+          className={`${inputClass} sm:w-40`}
         />
-      </label>
-      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
-      <Button type="submit" disabled={busy || !comment.trim()}>
-        {busy ? "Envoi…" : "Envoyer à l'élève"}
+        {scoreInvalid && <FieldError id="fb-score-error">Entre 0 et 100, ou laissez vide</FieldError>}
+      </div>
+      {error && <Notice tone="error">{error} Votre texte est conservé.</Notice>}
+      {sent && <Notice tone="success">Retour envoyé. {studentFirstName} reçoit une notification.</Notice>}
+      <Button type="submit" loading={busy} disabled={!comment.trim() || scoreInvalid}>
+        Envoyer à l&apos;élève
       </Button>
-      <p className="text-xs text-zinc-500">L&apos;élève reçoit une notification.</p>
+      <p className="text-xs text-muted">{studentFirstName} reçoit une notification.</p>
     </form>
   );
 }
 
 export function FeedbackList({ items }: { items: FeedbackItem[] }) {
-  if (!items.length) return <p className="text-[15px] text-muted">Aucun feedback pour le moment.</p>;
+  if (!items.length) return <p className="text-[15px] text-muted">Aucun retour envoyé pour le moment.</p>;
   return (
     <ul className="grid gap-2.5">
       {items.map((f) => (

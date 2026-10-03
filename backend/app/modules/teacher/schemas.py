@@ -85,6 +85,7 @@ class SpeakingSessionItem(BaseModel):
     started_at: datetime
     attempts: int
     last_score: float | None
+    reviewed: bool  # un enseignant a relu l'analyse IA (en laissant un retour sur la session)
 
 
 class StudentDetail(BaseModel):
@@ -115,6 +116,7 @@ class TeacherSessionDetail(BaseModel):
     turns: list[TurnOut]
     feedback: FeedbackOut | None
     student: StudentName
+    reviewed_by: str | None
     teacher_feedback: list[FeedbackItem]
 
 

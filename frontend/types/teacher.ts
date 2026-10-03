@@ -56,6 +56,7 @@ export interface StudentDetail {
     started_at: string;
     attempts: number;
     last_score: number | null;
+    reviewed: boolean;
   }[];
   feedback: FeedbackItem[];
 }
@@ -67,6 +68,7 @@ export interface TeacherSessionDetail {
   feedback: SessionFeedback | null;
   student: { id: string; first_name: string; last_name: string };
   teacher_feedback: FeedbackItem[];
+  reviewed_by: string | null;
 }
 
 export interface AppNotification {

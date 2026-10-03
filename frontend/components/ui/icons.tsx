@@ -152,3 +152,31 @@ export const TrashIcon = (p: IconProps) => (
     <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
   </Icon>
 );
+
+export const SearchIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3.5-3.5" />
+  </Icon>
+);
+export const TrendUpIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="m3 17 6-6 4 4 8-8M15 7h6v6" />
+  </Icon>
+);
+export const PlusIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M12 5v14M5 12h14" />
+  </Icon>
+);
+export const PauseIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M8 5v14M16 5v14" />
+  </Icon>
+);
+export const UserIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4 20a8 8 0 0 1 16 0" />
+  </Icon>
+);

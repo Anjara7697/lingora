@@ -183,6 +183,15 @@ def dashboard(db: Session, teacher: User) -> dict:
 # ---------- Fiche élève ----------
 
 
+def _reviewer_name(db: Session, session_id: uuid.UUID) -> str | None:
+    """Enseignant qui a relu l'analyse IA de la session (en lui laissant un retour), s'il y en a un."""
+    reviewer = db.scalar(
+        select(User).join(SpeakingFeedback, SpeakingFeedback.reviewed_by == User.id)
+        .where(SpeakingFeedback.session_id == session_id)
+    )
+    return f"{reviewer.first_name} {reviewer.last_name}" if reviewer else None
+
+
 def student_detail(db: Session, teacher: User, student_id: uuid.UUID) -> dict:
     student = student_for_teacher(db, teacher, student_id)
     row = next(r for r in student_rows(db, teacher) if r["id"] == student.id)
@@ -229,7 +238,8 @@ def student_detail(db: Session, teacher: User, student_id: uuid.UUID) -> dict:
         scores = [t["overall_score"] for t in view["turns"] if t["overall_score"] is not None]
         sessions.append({"id": sess.id, "scenario_title": scenario.title, "status": sess.status,
                          "started_at": sess.started_at, "attempts": len(view["turns"]),
-                         "last_score": scores[-1] if scores else None})
+                         "last_score": scores[-1] if scores else None,
+                         "reviewed": _reviewer_name(db, sess.id) is not None})
     return {
         "student": {"id": student.id, "first_name": student.first_name, "last_name": student.last_name,
                     "email": student.email, "created_at": student.created_at},
@@ -250,6 +260,7 @@ def speaking_session_detail(db: Session, teacher: User, student_id: uuid.UUID, s
         raise AppError(404, "SESSION_NOT_FOUND", "Session introuvable")
     return {**speaking_service.session_view(db, session),
             "student": {"id": student.id, "first_name": student.first_name, "last_name": student.last_name},
+            "reviewed_by": _reviewer_name(db, session.id),
             "teacher_feedback": feedback_for_student(db, student.id, session_id=session.id)}
 
 
