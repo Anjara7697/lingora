@@ -26,31 +26,6 @@
   --radius-xl: 24px;
 
   --shadow-card: 0 1px 2px rgb(23 37 84 / 0.06), 0 4px 16px rgb(23 37 84 / 0.08);
-
-  /* ── Couche de compatibilité ─────────────────────────────────────────────────────────────
-     Les écrans pas encore migrés utilisent encore les teintes « zinc » et « indigo » de Tailwind.
-     On les redirige vers la charte pour que toute l'application change d'identité d'un coup ;
-     chaque écran migré cesse de s'en servir, et ce bloc disparaîtra avec le dernier. */
-  --color-indigo-50: #e9edf7;
-  --color-indigo-100: #dbe2f2;
-  --color-indigo-200: #c3cde6;
-  --color-indigo-300: #9aa9d1;
-  --color-indigo-400: #14b8a6;
-  --color-indigo-500: #243b83;
-  --color-indigo-600: #172554;
-  --color-indigo-700: #0f1a42;
-  --color-indigo-800: #172554;
-  --color-indigo-900: #172554;
-  --color-zinc-50: #f8fafc;
-  --color-zinc-100: #f1f5f9;
-  --color-zinc-200: #e2e8f0;
-  --color-zinc-300: #cbd5e1;
-  --color-zinc-400: #94a3b8;
-  --color-zinc-500: #64748b;
-  --color-zinc-600: #475569;
-  --color-zinc-700: #334155;
-  --color-zinc-800: #1e293b;
-  --color-zinc-900: #172554;
 }
 
 :root {
