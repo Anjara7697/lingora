@@ -47,14 +47,22 @@ export function AppHeader() {
               <Link href="/admin/teachers" className={link}>
                 Enseignants
               </Link>
+              <Link href="/admin/content" className={link}>
+                Contenu
+              </Link>
               <Link href="/teacher" className={link}>
                 Élèves
               </Link>
             </>
           ) : isStaff(user?.role) ? (
-            <Link href="/teacher" className={link}>
-              Mes élèves
-            </Link>
+            <>
+              <Link href="/teacher" className={link}>
+                Mes élèves
+              </Link>
+              <Link href="/admin/content" className={link}>
+                Contenu
+              </Link>
+            </>
           ) : (
             <>
               {user && (

@@ -170,6 +170,28 @@ activité d'oral et appels IA, séries sur 14 jours.
 
 Les assignations se font maintenant dans l'interface (**Admin → Enseignants**) ; la CLI `app.cli` reste disponible.
 
+## Création de contenu (CMS) — `/api/v1/cms`
+
+Réservé aux rôles qui ont les permissions `courses.update` (lecture/édition) et `courses.create` (création) :
+**enseignants et administrateurs** (les élèves reçoivent 403). Interface : menu **Contenu** (`/admin/content`).
+
+Hiérarchie : **Programme → Cours → Leçon → (Contenus + Exercices)** ; **Situations d'oral** à part.
+Statuts : **Brouillon** (invisible des élèves) → **Publié** ; **Archivé** = suppression logique (RB-09 : l'historique
+des élèves — inscriptions, tentatives, progression — n'est jamais supprimé). Les situations d'oral ne se suppriment pas :
+on les dépublie. La banque du test de niveau est un contenu système, invisible et non modifiable ici.
+
+- **Règles de publication** (erreurs expliquées en français) : une leçon a besoin d'au moins un exercice valide ; un cours,
+  d'au moins une leçon publiée ; un programme, d'au moins un cours publié contenant une leçon publiée. Dépublier est toujours possible
+  (les élèves inscrits perdent l'accès, pas leur historique).
+- **Exercices validés à l'écriture** (`learning/validation.py`) : QCM (2–6 options distinctes, bonne réponse valide),
+  vrai/faux, texte à compléter (doit contenir `___`), traduction, remise en ordre (les mots sont mélangés automatiquement),
+  association (paires uniques), oral / question ouverte / rédaction (consigne obligatoire). Tout ce que le CMS accepte est
+  corrigeable par le moteur élève. Le type d'un exercice déjà tenté par des élèves ne peut plus changer.
+- **Contenus** : texte, ou lien / image / audio / vidéo / document **par URL** (http(s) uniquement : `javascript:` etc. refusés).
+  Pas encore de téléversement de fichiers.
+- Ordre : boutons ↑ ↓ (les éléments neufs se placent à la fin) ; toute opération est écrite dans `audit_logs`.
+- Éditer un exercice déjà publié modifie aussi sa correction pour les prochaines tentatives.
+
 ## Workflow Git
 
 `main` reste stable. Chaque gros changement vit dans sa branche, intégrée par PR :
@@ -187,5 +209,5 @@ Branches prévues (ordre de l'architecture, §71) :
 6. `feature/speaking-lab` — scénarios, audio, STT, feedback IA (mode démo) ✅
 7. `feature/teacher-space` — espace enseignant, feedback humain, notifications ✅
 7b. `feature/admin-users` — utilisateurs, rôles, assignations, statistiques ✅
-7c. `feature/cms-content` — création/édition des programmes, cours, leçons, exercices, situations d'oral
+7c. `feature/cms-content` — création/édition des programmes, cours, leçons, exercices, situations d'oral ✅
 8. `feature/billing` — plans, abonnements, paiements, notifications

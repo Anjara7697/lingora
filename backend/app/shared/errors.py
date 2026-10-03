@@ -7,8 +7,8 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 
 class AppError(Exception):
-    def __init__(self, status_code: int, code: str, message: str):
-        self.status_code, self.code, self.message = status_code, code, message
+    def __init__(self, status_code: int, code: str, message: str, details: list[dict] | None = None):
+        self.status_code, self.code, self.message, self.details = status_code, code, message, details
 
 
 def envelope(data=None, meta=None, error=None) -> dict:
@@ -25,7 +25,7 @@ def _error(status: int, code: str, message: str, details=None) -> JSONResponse:
 def register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def _app_error(_: Request, exc: AppError):
-        return _error(exc.status_code, exc.code, exc.message)
+        return _error(exc.status_code, exc.code, exc.message, exc.details)
 
     @app.exception_handler(StarletteHTTPException)
     async def _http_error(_: Request, exc: StarletteHTTPException):
@@ -34,7 +34,7 @@ def register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(RequestValidationError)
     async def _validation_error(_: Request, exc: RequestValidationError):
         details = [
-            {"field": ".".join(str(p) for p in e["loc"][1:]), "message": e["msg"]}
+            {"field": ".".join(str(p) for p in e["loc"][1:]), "message": e["msg"].removeprefix("Value error, ")}
             for e in exc.errors()
         ]
         return _error(422, "VALIDATION_ERROR", "Données invalides", details)

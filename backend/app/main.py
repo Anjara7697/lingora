@@ -7,6 +7,7 @@ from app.core.config import settings
 from app.modules.admin.router import router as admin_router
 from app.modules.assessment.router import router as assessment_router
 from app.modules.auth.router import router as auth_router
+from app.modules.cms.router import router as cms_router
 from app.modules.health.router import router as health_router
 from app.modules.learning.router import router as learning_router
 from app.modules.platform.router import router as platform_router
@@ -39,6 +40,7 @@ api_v1 = APIRouter(prefix="/api/v1")
 api_v1.include_router(auth_router)
 api_v1.include_router(users_router)
 api_v1.include_router(admin_router)
+api_v1.include_router(cms_router)
 api_v1.include_router(learning_router)
 api_v1.include_router(assessment_router)
 api_v1.include_router(speaking_router)
