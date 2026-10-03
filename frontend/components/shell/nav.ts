@@ -26,11 +26,15 @@ export const STUDENT_TABS: (NavItem & { icon: ComponentType<IconProps> })[] = [
 export const hidesTabs = (pathname: string) =>
   pathname.startsWith("/lessons/") ||
   /^\/speaking\/[^/]+/.test(pathname) ||
-  pathname === "/placement" ||
+  pathname.startsWith("/placement") ||
   pathname === "/onboarding";
 
 /** Leçon et session d'oral : plein écran, sans barre du haut — la page affiche son propre en-tête avec retour. */
-export const isFocusScreen = (pathname: string) => pathname.startsWith("/lessons/") || /^\/speaking\/[^/]+/.test(pathname);
+export const isFocusScreen = (pathname: string) =>
+  pathname.startsWith("/lessons/") ||
+  /^\/speaking\/[^/]+/.test(pathname) ||
+  pathname.startsWith("/placement") ||
+  pathname === "/onboarding";
 
 export interface NavGroup {
   title?: string;

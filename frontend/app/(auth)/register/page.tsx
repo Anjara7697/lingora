@@ -4,17 +4,26 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { Button, Field } from "@/components/ui/Field";
+import { AuthCard, authLink } from "@/components/auth/AuthCard";
+import { Button } from "@/components/ui/Button";
+import { Field } from "@/components/ui/Field";
+import { ClockIcon } from "@/components/ui/icons";
+import { Notice } from "@/components/ui/Notice";
+import { PasswordField } from "@/components/ui/PasswordField";
 import { useAuth } from "@/features/auth/AuthProvider";
+import { noticeFor, type FormNotice } from "@/features/auth/errors";
 import { useGuestRedirect } from "@/features/auth/useGuestRedirect";
 import { ApiError } from "@/lib/api/client";
 import { validateEmail, validatePassword } from "@/lib/validations/auth";
+import { useOnline } from "@/lib/useOnline";
 
 export default function RegisterPage() {
   const { register } = useAuth();
   const router = useRouter();
+  const online = useOnline();
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [formError, setFormError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<FormNotice | null>(null);
+  const [emailTaken, setEmailTaken] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   useGuestRedirect(!submitting);
 
@@ -41,7 +50,8 @@ export default function RegisterPage() {
       next.password_confirmation = "La confirmation ne correspond pas";
     }
     setErrors(next);
-    setFormError(null);
+    setNotice(null);
+    setEmailTaken(false);
     if (Object.keys(next).length) return;
 
     setSubmitting(true);
@@ -49,59 +59,65 @@ export default function RegisterPage() {
       await register(input);
       router.replace("/onboarding");
     } catch (err) {
-      if (err instanceof ApiError) {
-        if (err.body.code === "EMAIL_ALREADY_USED") {
-          setErrors({ email: "Cet email est déjà utilisé" });
-        } else {
-          const serverErrors: Record<string, string> = {};
-          for (const d of err.body.details ?? []) serverErrors[d.field] = d.message;
-          setErrors(serverErrors);
-          if (!Object.keys(serverErrors).length) setFormError(err.message);
-        }
+      if (err instanceof ApiError && err.body.code === "EMAIL_ALREADY_USED") {
+        setErrors({ email: "Cet email est déjà utilisé" });
+        setEmailTaken(true);
+      } else if (err instanceof ApiError && err.status !== 0 && err.status !== 429 && err.body.details?.length) {
+        const serverErrors: Record<string, string> = {};
+        for (const d of err.body.details) serverErrors[d.field] = d.message;
+        setErrors(serverErrors);
+      } else if (err instanceof ApiError && err.status === 0) {
+        setNotice({ tone: "error", title: "Compte non créé.", text: "Le serveur est injoignable, réessayez une fois connecté." });
       } else {
-        setFormError("Une erreur est survenue.");
+        setNotice(noticeFor(err));
       }
       setSubmitting(false);
     }
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
-      <h1 className="text-xl font-semibold text-zinc-900">Créer mon compte</h1>
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Prénom" name="first_name" autoComplete="given-name" error={errors.first_name} />
-        <Field label="Nom" name="last_name" autoComplete="family-name" error={errors.last_name} />
-      </div>
-      <Field label="Email" name="email" type="email" autoComplete="email" error={errors.email} />
-      <Field
-        label="Mot de passe"
-        name="password"
-        type="password"
-        autoComplete="new-password"
-        error={errors.password}
-      />
-      <Field
-        label="Confirmer le mot de passe"
-        name="password_confirmation"
-        type="password"
-        autoComplete="new-password"
-        error={errors.password_confirmation}
-      />
-      <p className="text-xs text-zinc-500">8 caractères minimum, avec au moins une lettre et un chiffre.</p>
-      {formError && (
-        <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-          {formError}
-        </p>
-      )}
-      <Button type="submit" disabled={submitting}>
-        {submitting ? "Création…" : "Créer mon compte"}
-      </Button>
-      <p className="text-center text-sm text-zinc-600">
-        Déjà inscrit ?{" "}
-        <Link href="/login" className="font-medium text-indigo-600 hover:underline">
-          Se connecter
-        </Link>
-      </p>
-    </form>
+    <AuthCard
+      footer={
+        <>
+          Déjà inscrit ?{" "}
+          <Link href="/login" className={authLink}>
+            Se connecter
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={onSubmit} noValidate className="flex flex-col gap-3.5">
+        <h1 className="font-display text-2xl font-bold tracking-[-0.02em] text-ink">Créer mon compte</h1>
+        {!online && <Notice tone="offline" title="Hors ligne.">Vos saisies sont conservées.</Notice>}
+        {notice && (
+          <Notice tone={notice.tone} title={notice.title} icon={notice.clock ? <ClockIcon size={20} strokeWidth={2} /> : undefined}>
+            {notice.text}
+          </Notice>
+        )}
+        <div className="grid grid-cols-2 gap-2.5">
+          <Field label="Prénom" name="first_name" autoComplete="given-name" error={errors.first_name} readOnly={submitting} />
+          <Field label="Nom" name="last_name" autoComplete="family-name" error={errors.last_name} readOnly={submitting} />
+        </div>
+        <div className="flex flex-col gap-2">
+          <Field label="Email" name="email" type="email" autoComplete="email" error={errors.email} readOnly={submitting} />
+          {emailTaken && (
+            <Link href="/login" className={`${authLink} text-sm`}>
+              Se connecter avec cet email
+            </Link>
+          )}
+        </div>
+        <PasswordField label="Mot de passe" name="password" autoComplete="new-password" error={errors.password} showRules readOnly={submitting} />
+        <PasswordField
+          label="Confirmer le mot de passe"
+          name="password_confirmation"
+          autoComplete="new-password"
+          error={errors.password_confirmation}
+          readOnly={submitting}
+        />
+        <Button type="submit" loading={submitting} className="mt-1">
+          {submitting ? "Création…" : "Créer mon compte"}
+        </Button>
+      </form>
+    </AuthCard>
   );
 }

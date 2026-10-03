@@ -12,11 +12,11 @@ const TONE: Record<Tone, { cls: string; icon: ReactNode; role: "status" | "alert
 };
 
 /** Message d'état : icône + titre court en gras + détail. Ne repose jamais sur la couleur seule. */
-export function Notice({ tone, title, children, className = "" }: { tone: Tone; title?: string; children?: ReactNode; className?: string }) {
+export function Notice({ tone, title, icon, children, className = "" }: { tone: Tone; title?: string; icon?: ReactNode; children?: ReactNode; className?: string }) {
   const t = TONE[tone];
   return (
     <div role={t.role} className={`flex gap-2.5 rounded-md px-3.5 py-3 text-sm leading-[1.45] ${t.cls} ${className}`}>
-      <span className="mt-px flex-none">{t.icon}</span>
+      <span className="mt-px flex-none">{icon ?? t.icon}</span>
       <div>
         {title && <b className="font-semibold">{title} </b>}
         {children}
