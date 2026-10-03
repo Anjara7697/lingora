@@ -1,9 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/Field";
+import { useAuth } from "@/features/auth/AuthProvider";
+import { ApiError } from "@/lib/api/client";
 import { submitActivity } from "@/lib/api/learning";
+import { deleteStoredResult, enqueueAnswer, getStoredResult, pendingAnswers } from "@/lib/offline/db";
+import { SYNCED_EVENT } from "@/lib/offline/sync";
 import type { ActivityItem, SubmitResult } from "@/types/learning";
 
 interface Props {
@@ -45,6 +49,37 @@ export function ActivityCard({ item, onResult }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [startedAt, setStartedAt] = useState(() => Date.now());
+  const { user } = useAuth();
+  const userId = user?.id;
+  const [queued, setQueued] = useState(false); // réponse donnée sans réseau, en attente d'envoi
+  const [corrected, setCorrected] = useState(false); // correction reçue après synchronisation
+
+  // Réponse mise de côté hors ligne : en attente, ou déjà corrigée depuis la reconnexion.
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    const restore = () =>
+      getStoredResult(userId, activity.id)
+        .then(async (stored) => {
+          if (cancelled) return;
+          if (stored) {
+            setResult(stored);
+            setQueued(false);
+            setCorrected(true);
+            onResult(activity.id, stored);
+          } else {
+            const waiting = (await pendingAnswers(userId)).some((a) => a.activityId === activity.id);
+            if (!cancelled) setQueued(waiting);
+          }
+        })
+        .catch(() => {});
+    void restore();
+    window.addEventListener(SYNCED_EVENT, restore);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(SYNCED_EVENT, restore);
+    };
+  }, [userId, activity.id, onResult]);
 
   const isPractice = activity.type === "SPEAKING";
   const canSubmit = isPractice || isComplete(item, answer);
@@ -58,6 +93,17 @@ export function ActivityCard({ item, onResult }: Props) {
       setResult(res);
       onResult(activity.id, res);
     } catch (e) {
+      if (e instanceof ApiError && e.status === 0 && userId) {
+        // Pas de réseau : la réponse est gardée sur l'appareil et corrigée à la reconnexion.
+        const saved = await enqueueAnswer({
+          userId,
+          activityId: activity.id,
+          answer: isPractice ? null : answer,
+          durationSeconds: Math.round((Date.now() - startedAt) / 1000),
+          answeredAt: Date.now(),
+        });
+        if (saved) return setQueued(true);
+      }
       setError((e as Error).message);
     } finally {
       setSubmitting(false);
@@ -65,12 +111,14 @@ export function ActivityCard({ item, onResult }: Props) {
   }
 
   function retry() {
+    if (corrected) void deleteStoredResult(activity.id);
+    setCorrected(false);
     setAnswer(null);
     setResult(null);
     setStartedAt(Date.now());
   }
 
-  const locked = result !== null;
+  const locked = result !== null || queued;
   return (
     <article className="rounded-xl border border-zinc-200 bg-white p-4">
       <header className="mb-2 flex items-start justify-between gap-2">
@@ -93,6 +141,12 @@ export function ActivityCard({ item, onResult }: Props) {
 
       {error && <p role="alert" className="mt-3 text-sm text-red-600">{error}</p>}
 
+      {queued && (
+        <div role="status" className="mt-3 rounded-lg bg-indigo-50 px-3 py-2 text-sm text-indigo-800">
+          Réponse enregistrée sur cet appareil. Elle sera envoyée et corrigée dès que vous retrouverez Internet.
+        </div>
+      )}
+
       {result && (
         <div
           className={`mt-3 rounded-lg px-3 py-2 text-sm ${
@@ -114,6 +168,7 @@ export function ActivityCard({ item, onResult }: Props) {
             </>
           )}
           {result.explanation && <p className="mt-1 text-xs opacity-80">{result.explanation}</p>}
+          {corrected && <p className="mt-1 text-xs opacity-70">Corrigée à la reconnexion.</p>}
         </div>
       )}
 
@@ -123,7 +178,7 @@ export function ActivityCard({ item, onResult }: Props) {
             {submitting ? "Envoi…" : isPractice ? "J'ai pratiqué à voix haute" : graded ? "Valider" : "Envoyer"}
           </Button>
         )}
-        {locked && result.graded && !result.is_correct && (
+        {result && result.graded && !result.is_correct && (
           <Button onClick={retry} className="bg-zinc-700 hover:bg-zinc-800">
             Réessayer
           </Button>

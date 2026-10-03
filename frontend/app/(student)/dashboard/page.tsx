@@ -41,7 +41,10 @@ export default function DashboardPage() {
   return (
     <>
       <h1 className="text-2xl font-bold text-zinc-900">Bonjour {user.first_name} 👋</h1>
-      <p className="mb-6 text-sm text-zinc-500">{user.email}</p>
+      <p className="mb-2 text-sm text-zinc-500">{user.email}</p>
+      <Link href="/downloads" className="mb-6 inline-block text-sm font-medium text-indigo-600 hover:underline">
+        Mes leçons hors ligne
+      </Link>
 
       {placement === null && (
         <section className="mb-6 rounded-xl border border-indigo-200 bg-white p-5">

@@ -63,8 +63,9 @@ async function refreshTokens(): Promise<TokenPair | null> {
       const fresh = await parse<TokenPair>(res);
       saveTokens(fresh);
       return fresh;
-    } catch {
-      clearTokens();
+    } catch (e) {
+      // Une coupure réseau n'est pas une session expirée : on garde les jetons pour la reconnexion.
+      if (!(e instanceof ApiError && e.status === 0)) clearTokens();
       return null;
     } finally {
       refreshing = null;

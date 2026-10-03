@@ -1,6 +1,6 @@
-// Service worker Lingora : coque applicative uniquement.
+// Service worker Lingora : coque applicative et pages visitées ou téléchargées.
 // Jamais de cache pour l'API (/api/*) ni les médias audio : données toujours fraîches et privées.
-const VERSION = "lingora-v1";
+const VERSION = "lingora-v2"; // identique à SW_VERSION dans lib/offline/pages.ts
 const STATIC_CACHE = `${VERSION}-static`;
 const PAGE_CACHE = `${VERSION}-pages`;
 const OFFLINE_URL = "/offline";
@@ -43,8 +43,21 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (req.mode === "navigate") {
+    // Réseau d'abord ; les pages vues (HTML sans donnée personnelle) servent de secours hors ligne.
     event.respondWith(
-      fetch(req).catch(async () => (await caches.match(OFFLINE_URL)) ?? Response.error()),
+      (async () => {
+        try {
+          const res = await fetch(req);
+          if (res.ok && !res.redirected && (res.headers.get("content-type") || "").includes("text/html")) {
+            const cache = await caches.open(PAGE_CACHE);
+            await cache.put(req, res.clone());
+          }
+          return res;
+        } catch {
+          const hit = await caches.match(req, { ignoreSearch: true, ignoreVary: true });
+          return hit ?? (await caches.match(OFFLINE_URL)) ?? Response.error();
+        }
+      })(),
     );
   }
 });
