@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { OfflineIcon } from "@/components/ui/icons";
+import { LogoMark } from "@/components/ui/Logo";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { SYNCED_EVENT, type SyncReport, syncPending } from "@/lib/offline/sync";
 
@@ -79,7 +80,11 @@ export function PwaProvider() {
       )}
       {installEvent && (
         <div className="fixed inset-x-3 bottom-20 z-50 flex items-center justify-between gap-3 rounded-lg bg-surface p-3 text-sm shadow-card ring-1 ring-line md:bottom-3">
-          <span className="font-semibold text-ink">Installer Lingora sur votre écran d&apos;accueil</span>
+          <LogoMark height={28} />
+          <span className="flex flex-1 flex-col">
+            <span className="font-semibold text-ink">Installer Lingora</span>
+            <span className="text-xs text-muted">Accès direct depuis l&apos;écran d&apos;accueil.</span>
+          </span>
           <span className="flex gap-2">
             <button type="button" className="h-10 px-2 text-muted" onClick={() => setInstallEvent(null)}>
               Plus tard
