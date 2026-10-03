@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
-import { ProgressBar } from "@/components/ui/ProgressBar";
+import { buttonClass } from "@/components/ui/Button";
+import { BulbIcon, CheckIcon, ChevronLeftIcon, DownloadIcon } from "@/components/ui/icons";
+import { Notice } from "@/components/ui/Notice";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { useRequireAuth } from "@/features/auth/useRequireAuth";
 import { ActivityCard } from "@/features/learning/ActivityCard";
@@ -91,82 +93,119 @@ export default function LessonPage() {
     );
   }, []);
 
-  if (!allowed) return <p className="text-zinc-500">Chargement…</p>;
+  if (!allowed) return <p className="p-5 text-muted">Chargement…</p>;
   if (error) {
     const notEnrolled = error instanceof ApiError && error.body.code === "NOT_ENROLLED";
     return (
-      <div role="alert" className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900">
-        <p>{error.message}</p>
+      <div className="flex flex-col gap-3 p-5">
+        <Link href="/programs" className="inline-flex items-center gap-1 text-[15px] font-semibold text-ink">
+          <ChevronLeftIcon size={22} strokeWidth={2.2} /> Programmes
+        </Link>
+        <Notice tone="error">{error.message}</Notice>
         {notEnrolled && (
-          <Link href="/programs" className="mt-2 inline-block font-medium text-indigo-600 hover:underline">
+          <Link href="/programs" className={buttonClass("primary")}>
             Voir les programmes
           </Link>
         )}
       </div>
     );
   }
-  if (!lesson) return <p className="text-zinc-500">Chargement…</p>;
+  if (!lesson) return <p className="p-5 text-muted">Chargement…</p>;
 
-  const pct = Number(lesson.progress?.progress_percentage ?? 0);
+  const total = lesson.activities.length;
+  const done = lesson.activities.filter((a) => a.mastered).length;
   const completed = lesson.progress?.status === "COMPLETED";
 
   return (
     <>
-      <Link href={`/programs/${lesson.program.slug}`} className="text-sm text-indigo-600 hover:underline">
-        ← {lesson.program.name}
-      </Link>
-      <p className="mt-2 text-xs uppercase tracking-wide text-zinc-500">{lesson.course.title}</p>
-      <h1 className="text-2xl font-bold text-zinc-900">{lesson.lesson.title}</h1>
-      {fromDevice && (
-        <p role="status" className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          Mode hors ligne : vos réponses seront corrigées dès que vous retrouverez Internet.
-        </p>
-      )}
-      {offlineSupported() && !fromDevice && (
-        <button
-          type="button"
-          onClick={toggleSaved}
-          disabled={saving}
-          className="mt-2 text-sm font-medium text-indigo-600 hover:underline disabled:opacity-60"
-        >
-          {saving ? "Téléchargement…" : saved ? "✓ Disponible hors ligne · Retirer" : "⬇ Télécharger pour hors ligne"}
-        </button>
-      )}
-      <div className="my-4">
-        <ProgressBar value={pct} label="Progression de la leçon" />
-      </div>
-
-      {lesson.contents.map((c) => (
-        <section key={c.id} className="mb-4 rounded-xl bg-indigo-50 p-4">
-          {c.title && <h2 className="mb-1 font-semibold text-indigo-900">{c.title}</h2>}
-          <p className="whitespace-pre-line text-sm text-zinc-800">{c.body}</p>
-        </section>
-      ))}
-
-      <h2 className="mb-3 mt-6 text-lg font-semibold text-zinc-900">Exercices</h2>
-      <div className="grid gap-4">
-        {lesson.activities.map((a) => (
-          <ActivityCard key={a.activity.id} item={a} onResult={onResult} />
-        ))}
-      </div>
-
-      {completed && (
-        <div className="mt-6 rounded-xl bg-green-50 p-4 text-green-900" role="status">
-          <p className="font-semibold">🎉 Leçon terminée !</p>
-          {lesson.next_lesson ? (
-            <Link
-              href={`/lessons/${lesson.next_lesson.id}`}
-              className="mt-2 inline-block rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white hover:bg-indigo-700"
+      <header className="sticky top-0 z-30 flex flex-col gap-2.5 border-b border-line bg-surface px-2 pb-3.5">
+        <div className="flex h-[52px] items-center justify-between">
+          <Link
+            href={`/programs/${lesson.program.slug}`}
+            className="flex h-11 items-center gap-1 px-2 text-[15px] font-semibold text-ink"
+          >
+            <ChevronLeftIcon size={22} strokeWidth={2.2} />
+            {lesson.program.name}
+          </Link>
+          {offlineSupported() && !fromDevice && (
+            <button
+              type="button"
+              onClick={toggleSaved}
+              disabled={saving}
+              aria-label={saved ? "Disponible hors ligne. Retirer cette leçon de l'appareil" : "Télécharger cette leçon pour l'utiliser hors ligne"}
+              className={`mr-2 inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold disabled:opacity-60 ${saved ? "bg-brand-tint text-brand-strong" : "text-brand-strong shadow-[inset_0_0_0_1.5px_#cbd5e1]"}`}
             >
-              Leçon suivante : {lesson.next_lesson.title}
-            </Link>
-          ) : (
-            <Link href={`/programs/${lesson.program.slug}`} className="mt-2 inline-block font-medium text-indigo-700 hover:underline">
-              Retour au programme
-            </Link>
+              {saved ? <CheckIcon size={16} strokeWidth={2.4} /> : <DownloadIcon size={16} strokeWidth={2.2} />}
+              {saving ? "Téléchargement…" : saved ? "Hors ligne" : "Télécharger"}
+            </button>
           )}
         </div>
-      )}
+        <div className="flex flex-col gap-3 px-3">
+          <div className="flex flex-col gap-1">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{lesson.course.title}</p>
+            <h1 className="font-display text-2xl font-bold leading-tight tracking-[-0.02em] text-ink">{lesson.lesson.title}</h1>
+          </div>
+          {total > 0 && (
+            <div className="flex items-center gap-2.5">
+              <div
+                role="progressbar"
+                aria-label="Exercices réussis"
+                aria-valuenow={done}
+                aria-valuemin={0}
+                aria-valuemax={total}
+                className="grid flex-1 gap-1"
+                style={{ gridTemplateColumns: `repeat(${total}, minmax(0, 1fr))` }}
+              >
+                {lesson.activities.map((a) => (
+                  <span key={a.activity.id} className={`h-1.5 rounded-full ${a.mastered ? "bg-brand" : "bg-line"}`} />
+                ))}
+              </div>
+              <span className="text-[13px] font-semibold text-ink-2">
+                {done} / {total}
+              </span>
+            </div>
+          )}
+        </div>
+      </header>
+
+      <div className="flex flex-col gap-4 p-5 pb-10">
+        {fromDevice && (
+          <Notice tone="offline" title="Hors ligne.">
+            Lecture seule : vos réponses seront corrigées dès que vous retrouverez Internet.
+          </Notice>
+        )}
+
+        {lesson.contents.map((c) => (
+          <section key={c.id} className="flex flex-col gap-2 rounded-lg bg-ink-tint px-[18px] py-4">
+            <h2 className="flex items-center gap-2 font-sans text-[15px] font-semibold tracking-normal text-ink">
+              <BulbIcon size={20} /> {c.title ?? "À retenir"}
+            </h2>
+            {c.body && <p className="whitespace-pre-line text-[15px] leading-[1.55] text-ink-2">{c.body}</p>}
+          </section>
+        ))}
+
+        <h2 className="mt-1 font-display text-lg font-bold text-ink">Exercices</h2>
+        {lesson.activities.map((a, i) => (
+          <ActivityCard key={a.activity.id} item={a} index={i + 1} onResult={onResult} />
+        ))}
+
+        {completed && (
+          <div className="flex flex-col gap-3 rounded-lg bg-brand-tint p-4 text-brand-strong" role="status">
+            <p className="flex items-center gap-2 font-semibold">
+              <CheckIcon size={20} strokeWidth={2.4} /> Leçon terminée, bravo !
+            </p>
+            {lesson.next_lesson ? (
+              <Link href={`/lessons/${lesson.next_lesson.id}`} className={buttonClass("primary")}>
+                Leçon suivante : {lesson.next_lesson.title}
+              </Link>
+            ) : (
+              <Link href={`/programs/${lesson.program.slug}`} className={buttonClass("secondary")}>
+                Retour au programme
+              </Link>
+            )}
+          </div>
+        )}
+      </div>
     </>
   );
 }

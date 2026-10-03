@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-import { STUDENT_TABS, hidesTabs, isActive } from "@/components/shell/nav";
+import { STUDENT_TABS, hidesTabs, isActive, isFocusScreen } from "@/components/shell/nav";
 import { buttonClass } from "@/components/ui/Button";
 import { BellIcon, DownloadIcon, LogoutIcon } from "@/components/ui/icons";
 import { Logo } from "@/components/ui/Logo";
@@ -176,6 +176,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user } = useAuth();
   const tabs = user?.role === "STUDENT" && !hidesTabs(pathname);
+  if (isFocusScreen(pathname)) return <div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col">{children}</div>;
   return (
     <div className="flex min-h-screen flex-col">
       <TopBar pathname={pathname} />

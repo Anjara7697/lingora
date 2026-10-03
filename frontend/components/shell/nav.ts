@@ -29,6 +29,9 @@ export const hidesTabs = (pathname: string) =>
   pathname === "/placement" ||
   pathname === "/onboarding";
 
+/** Leçon et session d'oral : plein écran, sans barre du haut — la page affiche son propre en-tête avec retour. */
+export const isFocusScreen = (pathname: string) => pathname.startsWith("/lessons/") || /^\/speaking\/[^/]+/.test(pathname);
+
 export interface NavGroup {
   title?: string;
   items: NavItem[];
