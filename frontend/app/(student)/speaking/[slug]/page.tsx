@@ -18,7 +18,9 @@ import {
   StrengthsCard,
   TipBox,
 } from "@/features/speaking/FeedbackCard";
+import { QuotaReached } from "@/features/speaking/QuotaReached";
 import { useRecorder } from "@/features/speaking/useRecorder";
+import { ApiError } from "@/lib/api/client";
 import { myBilling } from "@/lib/api/billing";
 import { completeSession, createSession, getSession, listScenarios, mediaUrl, submitTurn } from "@/lib/api/speaking";
 import type { BillingStatus } from "@/types/billing";
@@ -66,6 +68,7 @@ export default function SpeakingPracticePage() {
   const [latest, setLatest] = useState<Turn | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [quota, setQuota] = useState<BillingStatus | null>(null);
+  const [limitHit, setLimitHit] = useState(false); // le serveur a refusé : quota du jour atteint
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -98,7 +101,7 @@ export default function SpeakingPracticePage() {
   const completed = detail?.session.status === "COMPLETED";
   const left = detail?.attempts_left_today ?? quota?.speaking_attempts_left_today ?? null;
   const total = quota?.speaking_daily_limit ?? null;
-  const limitReached = left === 0;
+  const limitReached = left === 0 || limitHit;
 
   async function begin() {
     setBusy(true);
@@ -133,7 +136,11 @@ export default function SpeakingPracticePage() {
       setShowFeedback(true);
       rec.reset();
     } catch (e) {
-      setError((e as Error).message);
+      if (e instanceof ApiError && e.body.code === "DAILY_LIMIT_REACHED") {
+        // Code d'erreur stable : on affiche l'écran dédié plutôt qu'un message d'erreur.
+        setLimitHit(true);
+        rec.reset();
+      } else setError((e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -153,14 +160,7 @@ export default function SpeakingPracticePage() {
   }
 
   const errorBox = error && (
-    <Notice tone="error">
-      {error}{" "}
-      {error.includes("Premium") && (
-        <Link href="/billing" className="font-semibold underline">
-          Découvrir Premium
-        </Link>
-      )}
-    </Notice>
+    <Notice tone="error">{error}</Notice>
   );
 
   // ── Session terminée ───────────────────────────────────────────────────────────────────
@@ -296,16 +296,7 @@ export default function SpeakingPracticePage() {
                 <MicIcon size={20} strokeWidth={2} /> Nouvelle tentative
               </button>
             )}
-            {limitReached && (
-              <Notice tone="info" title="Analyses du jour utilisées.">
-                Revenez demain{quota && !quota.is_premium ? " ou passez à Premium pour pratiquer davantage" : ""}.{" "}
-                {quota && !quota.is_premium && (
-                  <Link href="/billing" className="font-semibold underline">
-                    Découvrir Premium
-                  </Link>
-                )}
-              </Notice>
-            )}
+            {limitReached && <QuotaReached total={total} premium={!!quota?.is_premium} trialAvailable={!!quota?.trial_available} />}
             <Button onClick={finish} disabled={busy} variant="secondary" className="w-full">
               {busy ? "…" : "Terminer la session"}
             </Button>
@@ -335,55 +326,46 @@ export default function SpeakingPracticePage() {
         {rec.error && <Notice tone="error">{rec.error}</Notice>}
       </div>
 
-      <div className="flex flex-1 flex-col items-center justify-center gap-5 py-6">
-        <button
-          type="button"
-          onClick={startAnswer}
-          disabled={limitReached}
-          aria-label="Démarrer l'enregistrement"
-          className="flex h-44 w-44 items-center justify-center rounded-full bg-brand-tint disabled:opacity-50"
-        >
-          <span className="flex h-[132px] w-[132px] items-center justify-center rounded-full bg-brand/30">
-            <span className="flex h-24 w-24 items-center justify-center rounded-full bg-brand text-ink shadow-[0_8px_24px_rgba(15,118,110,0.35)]">
-              <MicIcon size={40} strokeWidth={2} />
-            </span>
-          </span>
-        </button>
-        <div className="flex flex-col items-center gap-1.5 px-5 text-center">
-          {limitReached ? (
-            <>
-              <p className="text-[17px] font-semibold text-ink">Analyses du jour utilisées</p>
-              <p className="text-sm text-muted">
-                Revenez demain{quota && !quota.is_premium ? " ou " : "."}
-                {quota && !quota.is_premium && (
-                  <Link href="/billing" className="font-semibold text-brand-strong underline">
-                    passez à Premium
-                  </Link>
-                )}
-              </p>
-            </>
-          ) : (
-            <>
+      {limitReached ? (
+        <div className="flex flex-1 flex-col justify-center px-5 py-6">
+          <QuotaReached total={total} premium={!!quota?.is_premium} trialAvailable={!!quota?.trial_available} />
+        </div>
+      ) : (
+        <>
+          <div className="flex flex-1 flex-col items-center justify-center gap-5 py-6">
+            <button
+              type="button"
+              onClick={startAnswer}
+              aria-label="Démarrer l'enregistrement"
+              className="flex h-44 w-44 items-center justify-center rounded-full bg-brand-tint"
+            >
+              <span className="flex h-[132px] w-[132px] items-center justify-center rounded-full bg-brand/30">
+                <span className="flex h-24 w-24 items-center justify-center rounded-full bg-brand text-ink shadow-[0_8px_24px_rgba(15,118,110,0.35)]">
+                  <MicIcon size={40} strokeWidth={2} />
+                </span>
+              </span>
+            </button>
+            <div className="flex flex-col items-center gap-1.5 px-5 text-center">
               <p className="text-[17px] font-semibold text-ink">{detail?.turns.length ? "Nouvelle tentative : appuyez pour parler" : "Appuyez pour répondre"}</p>
               <p className="text-sm text-muted">À voix haute, en anglais · {Math.round(MAX_SECONDS / 60)} min max</p>
-            </>
-          )}
-        </div>
-      </div>
+            </div>
+          </div>
 
-      {left !== null && (
-        <div className="flex justify-center px-5 pb-7">
-          <p className="inline-flex h-9 items-center gap-2 rounded-full bg-surface px-3.5 text-[13px] text-ink-2 shadow-[inset_0_0_0_1px_#e2e8f0]">
-            {total !== null && total <= 5 && (
-              <span className="flex gap-[3px]" aria-hidden="true">
-                {Array.from({ length: total }, (_, i) => (
-                  <span key={i} className={`h-2 w-2 rounded-full ${i < left ? "bg-brand" : "bg-slate-300"}`} />
-                ))}
-              </span>
-            )}
-            {left} analyse(s) restante(s) aujourd&apos;hui
-          </p>
-        </div>
+          {left !== null && (
+            <div className="flex justify-center px-5 pb-7">
+              <p className="inline-flex h-9 items-center gap-2 rounded-full bg-surface px-3.5 text-[13px] text-ink-2 shadow-[inset_0_0_0_1px_#e2e8f0]">
+                {total !== null && total <= 5 && (
+                  <span className="flex gap-[3px]" aria-hidden="true">
+                    {Array.from({ length: total }, (_, i) => (
+                      <span key={i} className={`h-2 w-2 rounded-full ${i < left ? "bg-brand" : "bg-slate-300"}`} />
+                    ))}
+                  </span>
+                )}
+                {left} analyse(s) restante(s) aujourd&apos;hui
+              </p>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -27,14 +27,16 @@ export const hidesTabs = (pathname: string) =>
   pathname.startsWith("/lessons/") ||
   /^\/speaking\/[^/]+/.test(pathname) ||
   pathname.startsWith("/placement") ||
-  pathname === "/onboarding";
+  pathname === "/onboarding" ||
+  pathname === "/billing/demo-checkout";
 
 /** Leçon et session d'oral : plein écran, sans barre du haut — la page affiche son propre en-tête avec retour. */
 export const isFocusScreen = (pathname: string) =>
   pathname.startsWith("/lessons/") ||
   /^\/speaking\/[^/]+/.test(pathname) ||
   pathname.startsWith("/placement") ||
-  pathname === "/onboarding";
+  pathname === "/onboarding" ||
+  pathname === "/billing/demo-checkout";
 
 export interface NavGroup {
   title?: string;

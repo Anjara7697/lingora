@@ -73,16 +73,26 @@ export function FeedbackForm({ studentId, sessionId, onCreated }: Props) {
 }
 
 export function FeedbackList({ items }: { items: FeedbackItem[] }) {
-  if (!items.length) return <p className="text-sm text-zinc-500">Aucun feedback pour le moment.</p>;
+  if (!items.length) return <p className="text-[15px] text-muted">Aucun feedback pour le moment.</p>;
   return (
-    <ul className="grid gap-2">
+    <ul className="grid gap-2.5">
       {items.map((f) => (
-        <li key={f.id} className="rounded-lg border border-zinc-200 bg-white p-3 text-sm">
-          <p className="whitespace-pre-line text-zinc-800">{f.comment}</p>
-          <p className="mt-1 text-xs text-zinc-500">
-            {f.teacher_name} · {new Date(f.created_at).toLocaleDateString("fr-FR")}
-            {f.score !== null && ` · note ${Math.round(Number(f.score))}/100`}
-          </p>
+        <li key={f.id} className="flex flex-col gap-2.5 rounded-lg bg-surface p-4 shadow-card">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-ink-tint text-sm font-semibold text-ink">
+              {f.teacher_name.trim()[0]?.toUpperCase() ?? "?"}
+            </span>
+            <span className="flex min-w-0 flex-1 flex-col">
+              <span className="truncate text-[15px] font-semibold text-ink">{f.teacher_name}</span>
+              <span className="text-xs text-muted">{new Date(f.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</span>
+            </span>
+            {f.score !== null && (
+              <span className="inline-flex h-7 items-center rounded-full bg-ink px-2.5 text-[13px] font-semibold text-white">
+                {Math.round(Number(f.score))} / 100
+              </span>
+            )}
+          </div>
+          <p className="whitespace-pre-line text-[15px] leading-[1.55] text-ink-2">{f.comment}</p>
         </li>
       ))}
     </ul>
