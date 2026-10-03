@@ -245,7 +245,17 @@ Lingora est installable sur l'écran d'accueil (manifeste `app/manifest.ts`, ic�
 - Le service worker met en cache la coque applicative (`/_next/static`, icônes) et affiche la page `/offline` quand une navigation échoue sans réseau.
 - L'API (`/api/*`) et l'audio ne sont **jamais** mis en cache : données toujours à jour et privées.
 - Un bandeau signale la perte de connexion ; une invitation « Installer » apparaît quand le navigateur le permet.
-- Limites actuelles : pas de leçons hors ligne (prévu en V2). Sur téléphone, l'installation exige HTTPS (`localhost` fait exception).
+- Limites : le Speaking Lab (enregistrement, transcription, analyse IA) et les paiements nécessitent Internet. Sur téléphone, l'installation exige HTTPS (`localhost` fait exception).
+
+## Leçons hors ligne
+
+Un élève peut télécharger une leçon (bouton « Télécharger pour hors ligne ») ou toutes les leçons accessibles d'un programme, puis les ouvrir et y répondre sans Internet.
+
+- **Stockage** : IndexedDB (`lib/offline/db.ts`) pour les leçons, les réponses en attente et les corrections ; Cache API (service worker) pour les pages et fichiers JS/CSS nécessaires. La page `/downloads` liste, retire ou supprime ce qui est sur l'appareil.
+- **Corrections** : les solutions ne quittent jamais le serveur. Hors ligne, une réponse est gardée sur l'appareil puis envoyée dans l'ordre à la reconnexion (`lib/offline/sync.ts`) ; la correction s'affiche alors (« Corrigée à la reconnexion ») et la progression est mise à jour.
+- **Session** : l'application s'ouvre hors ligne avec le dernier profil connu ; une coupure réseau ne déconnecte plus. Une réponse n'est abandonnée que si le serveur la refuse définitivement (leçon retirée, inscription terminée).
+- **Vie privée** : chaque donnée est rattachée à son compte ; la déconnexion efface tout le stockage hors ligne, et la connexion d'un autre compte purge celui du précédent.
+- **Limites** : il faut télécharger avant de perdre le réseau ; les pages vues (tableau de bord, etc.) ne sont pas à jour hors ligne ; une copie téléchargée est rafraîchie dès qu'on rouvre la leçon avec Internet.
 
 ## Intégration continue (`.github/workflows/ci.yml`)
 

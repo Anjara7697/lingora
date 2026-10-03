@@ -2,8 +2,9 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
-import { apiAuth, apiPublic } from "@/lib/api/client";
-import { clearTokens, loadTokens, saveTokens } from "@/lib/auth/storage";
+import { ApiError, apiAuth, apiPublic } from "@/lib/api/client";
+import { clearTokens, loadCachedUser, loadTokens, saveCachedUser, saveTokens } from "@/lib/auth/storage";
+import { clearOfflineData, purgeOtherUsers } from "@/lib/offline/db";
 import type { AuthResult, User } from "@/types/api";
 
 export interface RegisterInput {
@@ -38,9 +39,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       let next: { status: Status; user: User | null } = { status: "anonymous", user: null };
       if (loadTokens()) {
         try {
-          next = { status: "authenticated", user: await apiAuth<User>("/me") };
-        } catch {
-          clearTokens();
+          const user = await apiAuth<User>("/me");
+          saveCachedUser(user);
+          next = { status: "authenticated", user };
+        } catch (e) {
+          // Sans réseau, on reste connecté avec le dernier profil connu (mode hors ligne).
+          const cached = e instanceof ApiError && e.status === 0 ? loadCachedUser() : null;
+          if (cached) next = { status: "authenticated", user: cached };
+          else if (!(e instanceof ApiError && e.status === 0)) clearTokens();
         }
       }
       if (!cancelled) setState(next);
@@ -53,6 +59,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const finish = useCallback((result: AuthResult) => {
     saveTokens(result.tokens);
+    saveCachedUser(result.user);
+    void purgeOtherUsers(result.user.id);
     setState({ status: "authenticated", user: result.user });
     return result.user;
   }, []);
@@ -76,6 +84,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         ),
       logout: () => {
         clearTokens();
+        saveCachedUser(null);
+        void clearOfflineData();
         setState({ status: "anonymous", user: null });
       },
     }),

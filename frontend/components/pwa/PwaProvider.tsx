@@ -1,12 +1,41 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
+
+import { useAuth } from "@/features/auth/AuthProvider";
+import { SYNCED_EVENT, type SyncReport, syncPending } from "@/lib/offline/sync";
 
 type InstallEvent = Event & { prompt: () => Promise<void> };
 
 export function PwaProvider() {
   const [online, setOnline] = useState(true);
   const [installEvent, setInstallEvent] = useState<InstallEvent | null>(null);
+  const [syncNote, setSyncNote] = useState<string | null>(null);
+  const { user } = useAuth();
+  const userId = user?.id;
+
+  // Les réponses données sans réseau sont envoyées dès que la connexion revient (et au démarrage).
+  useEffect(() => {
+    if (!userId) return;
+    const flush = () => void syncPending(userId);
+    const onSynced = (e: Event) => {
+      const { synced, dropped } = (e as CustomEvent<SyncReport>).detail;
+      setSyncNote(
+        synced
+          ? `${synced} réponse(s) envoyée(s) et corrigée(s). Retrouvez les corrections dans vos leçons.`
+          : `${dropped} réponse(s) n'ont pas pu être envoyées (leçon retirée ou inscription terminée).`,
+      );
+      setTimeout(() => setSyncNote(null), 8000);
+    };
+    flush();
+    window.addEventListener("online", flush);
+    window.addEventListener(SYNCED_EVENT, onSynced);
+    return () => {
+      window.removeEventListener("online", flush);
+      window.removeEventListener(SYNCED_EVENT, onSynced);
+    };
+  }, [userId]);
 
   useEffect(() => {
     if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") {
@@ -33,7 +62,17 @@ export function PwaProvider() {
     <>
       {!online && (
         <div role="status" className="fixed inset-x-0 top-0 z-50 bg-amber-500 px-4 py-2 text-center text-sm font-medium text-white">
-          Connexion perdue : certaines actions sont indisponibles.
+          Connexion perdue : certaines actions sont indisponibles.{" "}
+          {userId && (
+            <Link href="/downloads" className="underline">
+              Mes leçons téléchargées
+            </Link>
+          )}
+        </div>
+      )}
+      {syncNote && (
+        <div role="status" className="fixed inset-x-3 top-3 z-50 rounded-xl bg-emerald-600 px-4 py-2 text-center text-sm font-medium text-white shadow-lg">
+          {syncNote}
         </div>
       )}
       {installEvent && (

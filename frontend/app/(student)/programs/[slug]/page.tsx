@@ -7,7 +7,10 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Field";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { useAuth } from "@/features/auth/AuthProvider";
+import { ApiError } from "@/lib/api/client";
 import { enroll, getProgram } from "@/lib/api/learning";
+import { getSavedProgram, offlineSupported, saveProgram } from "@/lib/offline/db";
+import { downloadProgram } from "@/lib/offline/download";
 import type { ProgramDetail, ProgressStatus } from "@/types/learning";
 
 const STATUS_LABEL: Record<ProgressStatus, string> = {
@@ -19,7 +22,10 @@ const STATUS_LABEL: Record<ProgressStatus, string> = {
 
 export default function ProgramPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { status } = useAuth();
+  const { status, user } = useAuth();
+  const userId = user?.id;
+  const [note, setNote] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState<string | null>(null);
   const router = useRouter();
   const [detail, setDetail] = useState<ProgramDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -27,9 +33,32 @@ export default function ProgramPage() {
 
   const load = useCallback(() => {
     getProgram(slug)
-      .then(setDetail)
-      .catch((e: Error) => setError(e.message));
-  }, [slug]);
+      .then((d) => {
+        setDetail(d);
+        // garde à jour la copie hors ligne déjà téléchargée
+        if (userId) void getSavedProgram(userId, slug).then((rec) => rec && saveProgram(userId, d));
+      })
+      .catch(async (e: Error) => {
+        const copy = e instanceof ApiError && e.status === 0 && userId ? await getSavedProgram(userId, slug) : null;
+        if (copy) {
+          setDetail(copy.detail);
+          setNote("Mode hors ligne : seules les leçons téléchargées sont disponibles.");
+        } else setError(e.message);
+      });
+  }, [slug, userId]);
+
+  async function onDownload() {
+    if (!userId || !detail) return;
+    setDownloading("0");
+    try {
+      const n = await downloadProgram(userId, detail, (done, total) => setDownloading(`${done}/${total}`));
+      setNote(`${n} leçon(s) téléchargée(s) : elles s'ouvrent maintenant sans connexion.`);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setDownloading(null);
+    }
+  }
 
   useEffect(() => {
     if (status !== "loading") load();
@@ -69,6 +98,13 @@ export default function ProgramPage() {
           </Button>
         )}
       </div>
+
+      {note && <p role="status" className="mb-4 rounded-lg bg-indigo-50 px-3 py-2 text-sm text-indigo-800">{note}</p>}
+      {enrollment && offlineSupported() && !note?.startsWith("Mode hors ligne") && (
+        <button type="button" onClick={onDownload} disabled={downloading !== null} className="mb-5 text-sm font-medium text-indigo-600 hover:underline disabled:opacity-60">
+          {downloading !== null ? `Téléchargement… ${downloading}` : "⬇ Télécharger les leçons pour hors ligne"}
+        </button>
+      )}
 
       {courses.map(({ course, lessons }) => (
         <section key={course.id} className="mb-6">
