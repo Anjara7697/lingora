@@ -182,6 +182,7 @@ def test_student_detail_shows_real_activity(client, db, world):
     assert d["recent_attempts"][0]["is_correct"] is False
     assert {s["code"] for s in d["skills"]} >= {"SPEAKING", "GRAMMAR"}
     assert d["speaking_sessions"][0]["id"] == sid and d["speaking_sessions"][0]["attempts"] == 1
+    assert d["speaking_sessions"][0]["reviewed"] is False  # pas encore relue : « À relire »
     assert "password" not in str(d)
 
 
@@ -194,6 +195,7 @@ def test_teacher_reviews_a_speaking_session_with_audio_and_transcript(client, db
     audio = client.get(d["turns"][0]["audio_url"])
     assert audio.status_code == 200 and audio.content.startswith(b"audio-bytes")
     assert d["student"]["id"] == world["s1"]["id"] and d["feedback"]["attempts"] == 1
+    assert d["reviewed_by"] is None
 
 
 def test_feedback_notifies_the_student_and_validates_the_ai_feedback(client, db, world):
@@ -207,6 +209,9 @@ def test_feedback_notifies_the_student_and_validates_the_ai_feedback(client, db,
 
     ai = db.scalar(select(SpeakingFeedback))
     assert str(ai.reviewed_by) == world["teacher"]["id"]  # l'enseignant garde le contrôle pédagogique
+    sid_url = f"/api/v1/teacher/students/{world['s1']['id']}"
+    assert client.get(f"{sid_url}/speaking/{sid}", headers=t).json()["data"]["reviewed_by"] == "Hanta t1"
+    assert client.get(sid_url, headers=t).json()["data"]["speaking_sessions"][0]["reviewed"] is True
 
     notifs = client.get("/api/v1/me/notifications", headers=s).json()
     assert notifs["meta"]["unread"] == 1 and "Hanta" in notifs["data"][0]["title"]

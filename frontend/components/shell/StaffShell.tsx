@@ -33,7 +33,7 @@ function SidebarContent({ groups, role, onNavigate }: { groups: NavGroup[]; role
                   href={item.href}
                   onClick={onNavigate}
                   aria-current={active ? "page" : undefined}
-                  className={`flex h-10 items-center rounded-[10px] px-3 text-sm font-semibold ${active ? "bg-brand/15 text-white" : "hover:bg-white/5"}`}
+                  className={`flex h-10 items-center rounded-[10px] px-3 text-sm font-semibold ${active ? "bg-brand/15 text-white shadow-[inset_3px_0_0_#14b8a6]" : "hover:bg-white/5"}`}
                 >
                   {item.label}
                 </Link>

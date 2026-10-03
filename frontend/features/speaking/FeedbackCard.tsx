@@ -133,7 +133,7 @@ export function AnalysisCard({ analysis, overall }: { analysis: Analysis; overal
       <StrengthsCard strengths={analysis.strengths} />
       {allIssues.length > 0 && (
         <div className="grid gap-2.5">
-          <h3 className="font-sans text-base font-semibold tracking-normal text-ink">À améliorer</h3>
+          <h3 className="font-sans text-base font-semibold tracking-normal text-ink">Erreurs et suggestions · {allIssues.length}</h3>
           <IssueList issues={allIssues} />
         </div>
       )}

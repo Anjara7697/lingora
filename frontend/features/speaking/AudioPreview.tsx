@@ -6,7 +6,7 @@ const BARS = [10, 18, 24, 14, 22, 12, 26, 16, 8, 20, 14, 24, 10, 18, 12, 22, 8, 
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
 /** Lecteur audio compact (lecture / pause, barres de progression, durée) pour réécouter un enregistrement. */
-export function AudioPreview({ src, seconds }: { src: string | undefined; seconds: number }) {
+export function AudioPreview({ src, seconds, onError }: { src: string | undefined; seconds: number; onError?: () => void }) {
   const audio = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [time, setTime] = useState(0);
@@ -19,6 +19,10 @@ export function AudioPreview({ src, seconds }: { src: string | undefined; second
         ref={audio}
         src={src}
         preload="none"
+        onError={() => {
+          setPlaying(false);
+          onError?.();
+        }}
         onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)}
         onLoadedMetadata={(e) => Number.isFinite(e.currentTarget.duration) && setLength(e.currentTarget.duration)}
         onEnded={() => {
