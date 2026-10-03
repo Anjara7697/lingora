@@ -233,6 +233,11 @@ Formule **gratuite** (quelques analyses Speaking par jour) et **Premium** (beauc
 - Fournisseur `demo` : aucun argent réel, page de simulation dans l'app. **La production refuse `PAYMENT_PROVIDER=demo`** : brancher MVola / Orange Money / Airtel Money / Stripe revient à ajouter une classe dans `app/integrations/payment/`.
 - Interface : page **Premium** (`/billing`) dans le menu élève.
 
+**Vue administrateur** (permission `users.manage`, page `/admin/payments`) :
+- `GET /admin/billing/summary` : revenus (total et 30 derniers jours, par devise), abonnés payants, essais en cours, essais démarrés et part convertie en achat, paiements par statut.
+- `GET /admin/payments?status=&limit=&offset=` : historique paginé avec l'élève concerné, filtrable par statut.
+- « Abonné payant » = abonnement actif (ou annulé mais non expiré) sur une offre payante. « Essai → achat » = élèves ayant fait un essai puis au moins un paiement réussi.
+
 ## Application installable (PWA)
 
 Lingora est installable sur l'écran d'accueil (manifeste `app/manifest.ts`, icônes `public/icons/`, service worker `public/sw.js` enregistré en production uniquement).

@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from decimal import Decimal
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
@@ -7,6 +8,8 @@ from pydantic import BaseModel
 
 from app.modules.admin import analytics, service
 from app.modules.admin import schemas as s
+from app.modules.commerce import reporting
+from app.modules.commerce.models import PaymentStatus
 from app.modules.identity.models import UserRole, UserStatus
 from app.shared.dependencies import CurrentUser, DbSession, require_permission
 from app.shared.errors import envelope
@@ -95,3 +98,53 @@ class AnalyticsOut(BaseModel):
 @router.get("/analytics")
 def analytics_view(db: DbSession):
     return _out(AnalyticsOut, analytics.compute(db))
+
+
+class _Revenue(BaseModel):
+    currency: str
+    total: Decimal
+    last_30d: Decimal
+    payments: int
+
+
+class BillingSummary(BaseModel):
+    generated_at: datetime
+    revenue: list[_Revenue]
+    active_paid: int
+    active_trials: int
+    trials_started: int
+    trials_converted: int
+    payments_by_status: dict[str, int]
+
+
+class AdminPayment(BaseModel):
+    id: uuid.UUID
+    student_id: uuid.UUID
+    student_name: str
+    student_email: str
+    amount: Decimal
+    currency: str
+    provider: str
+    status: str
+    created_at: datetime
+    paid_at: datetime | None
+
+
+class PaymentPage(BaseModel):
+    items: list[AdminPayment]
+    total: int
+
+
+@router.get("/billing/summary")
+def billing_summary(db: DbSession):
+    return _out(BillingSummary, reporting.summary(db))
+
+
+@router.get("/payments")
+def payments(
+    db: DbSession,
+    status: PaymentStatus | None = None,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+):
+    return _out(PaymentPage, reporting.list_payments(db, status, limit, offset))

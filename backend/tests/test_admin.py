@@ -45,6 +45,7 @@ def audit_actions(db):
 
 @pytest.mark.parametrize(("method", "path"), [
     ("get", "/admin/users"), ("get", "/admin/teachers"), ("get", "/admin/analytics"),
+    ("get", "/admin/billing/summary"), ("get", "/admin/payments"),
     ("post", "/admin/users"), ("get", "/admin/teachers/00000000-0000-0000-0000-000000000000/roster"),
 ])
 def test_admin_api_is_admin_only(client, world, method, path):
