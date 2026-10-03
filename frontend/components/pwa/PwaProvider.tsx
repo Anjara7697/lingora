@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { OfflineIcon } from "@/components/ui/icons";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { SYNCED_EVENT, type SyncReport, syncPending } from "@/lib/offline/sync";
 
@@ -61,30 +62,31 @@ export function PwaProvider() {
   return (
     <>
       {!online && (
-        <div role="status" className="fixed inset-x-0 top-0 z-50 bg-amber-500 px-4 py-2 text-center text-sm font-medium text-white">
-          Connexion perdue : certaines actions sont indisponibles.{" "}
+        <div role="status" className="fixed inset-x-0 top-0 z-50 flex items-center justify-center gap-2 bg-ink px-4 py-2 text-center text-sm font-semibold text-white">
+          <OfflineIcon size={18} />
+          <span>Hors ligne : lecture seule, réponses gardées.</span>
           {userId && (
-            <Link href="/downloads" className="underline">
+            <Link href="/downloads" className="text-brand underline">
               Mes leçons téléchargées
             </Link>
           )}
         </div>
       )}
       {syncNote && (
-        <div role="status" className="fixed inset-x-3 top-3 z-50 rounded-xl bg-emerald-600 px-4 py-2 text-center text-sm font-medium text-white shadow-lg">
+        <div role="status" className="fixed inset-x-3 top-3 z-50 rounded-md bg-brand-strong px-4 py-3 text-center text-sm font-semibold text-white shadow-card">
           {syncNote}
         </div>
       )}
       {installEvent && (
-        <div className="fixed inset-x-3 bottom-3 z-50 flex items-center justify-between gap-3 rounded-xl bg-white p-3 text-sm shadow-lg ring-1 ring-zinc-200">
-          <span className="text-zinc-800">Installer Lingora sur votre écran d&apos;accueil</span>
+        <div className="fixed inset-x-3 bottom-20 z-50 flex items-center justify-between gap-3 rounded-lg bg-surface p-3 text-sm shadow-card ring-1 ring-line md:bottom-3">
+          <span className="font-semibold text-ink">Installer Lingora sur votre écran d&apos;accueil</span>
           <span className="flex gap-2">
-            <button type="button" className="text-zinc-500" onClick={() => setInstallEvent(null)}>
+            <button type="button" className="h-10 px-2 text-muted" onClick={() => setInstallEvent(null)}>
               Plus tard
             </button>
             <button
               type="button"
-              className="rounded-lg bg-indigo-600 px-3 py-1.5 font-medium text-white"
+              className="h-10 rounded-md bg-ink px-4 font-semibold text-white"
               onClick={async () => {
                 await installEvent.prompt();
                 setInstallEvent(null);

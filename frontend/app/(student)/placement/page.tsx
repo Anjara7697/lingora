@@ -125,7 +125,7 @@ export default function PlacementPage() {
       {error && <p role="alert" className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
       <div className="mt-6 flex justify-between gap-3">
-        <Button onClick={() => setIndex(index - 1)} disabled={index === 0} className="bg-zinc-700 hover:bg-zinc-800">
+        <Button onClick={() => setIndex(index - 1)} disabled={index === 0} variant="secondary">
           Précédent
         </Button>
         {index < total - 1 ? (

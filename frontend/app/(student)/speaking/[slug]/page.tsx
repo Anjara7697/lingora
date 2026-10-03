@@ -168,7 +168,7 @@ export default function SpeakingPracticePage() {
                   <Button onClick={send} disabled={busy || !rec.transcript.trim()}>
                     {busy ? "Analyse…" : "Envoyer pour analyse"}
                   </Button>
-                  <Button onClick={rec.reset} disabled={busy} className="bg-zinc-700 hover:bg-zinc-800">
+                  <Button onClick={rec.reset} disabled={busy} variant="secondary">
                     Refaire
                   </Button>
                 </div>

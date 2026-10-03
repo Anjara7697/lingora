@@ -3,9 +3,9 @@ export function ProgressBar({ value, label }: { value: number; label?: string })
   return (
     <div>
       {label && (
-        <div className="mb-1 flex justify-between text-xs text-zinc-500">
-          <span>{label}</span>
-          <span>{pct} %</span>
+        <div className="mb-2 flex justify-between text-sm">
+          <span className="font-semibold text-ink">{label}</span>
+          <span className="text-ink-2">{pct} %</span>
         </div>
       )}
       <div
@@ -13,9 +13,10 @@ export function ProgressBar({ value, label }: { value: number; label?: string })
         aria-valuenow={pct}
         aria-valuemin={0}
         aria-valuemax={100}
-        className="h-2 w-full overflow-hidden rounded-full bg-zinc-200"
+        aria-label={label}
+        className="h-2 w-full overflow-hidden rounded-full bg-line"
       >
-        <div className="h-full rounded-full bg-indigo-600 transition-all" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${pct}%` }} />
       </div>
     </div>
   );

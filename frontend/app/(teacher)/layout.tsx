@@ -1,10 +1,5 @@
-import { AppHeader } from "@/components/AppHeader";
+import { StaffShell } from "@/components/shell/StaffShell";
 
-export default function TeacherLayout({ children }: LayoutProps<"/">) {
-  return (
-    <>
-      <AppHeader />
-      <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-6">{children}</div>
-    </>
-  );
+export default function StaffLayout({ children }: LayoutProps<"/">) {
+  return <StaffShell>{children}</StaffShell>;
 }

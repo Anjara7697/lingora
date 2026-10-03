@@ -257,6 +257,17 @@ Un élève peut télécharger une leçon (bouton « Télécharger pour hors lign
 - **Vie privée** : chaque donnée est rattachée à son compte ; la déconnexion efface tout le stockage hors ligne, et la connexion d'un autre compte purge celui du précédent.
 - **Limites** : il faut télécharger avant de perdre le réseau ; les pages vues (tableau de bord, etc.) ne sont pas à jour hors ligne ; une copie téléchargée est rafraîchie dès qu'on rouvre la leçon avec Internet.
 
+## Design et charte
+
+L'interface suit la maquette « Refonte V1 » de Claude Design (identité Lingora) :
+
+- **Jeton de thème** dans `frontend/app/globals.css` (bloc `@theme`) : `ink` #172554 (primaire), `brand` #14B8A6 (accent), `brand-strong` #0F766E (succès, liens), `danger` #B42318 (actions destructives et erreurs bloquantes seulement), neutres `canvas` / `surface` / `line` / `muted`. Une mauvaise réponse n'est jamais rouge.
+- **Polices** : Sora 700 (titres, classe `font-display`) et Inter 400 / 600 (texte), chargées par `next/font`.
+- **Composants** : `components/ui/` (`Button`, `Field`, `ProgressBar`, `Pill`, `Notice`, `Logo`, `icons`). Boutons de 48 px, pictogrammes SVG à trait de 1,8 px qui remplacent les emoji.
+- **Navigation** : `components/shell/` — barre du haut et barre d'onglets en bas pour l'élève (masquée dans une leçon, une session d'oral, le test de niveau et l'onboarding), barre latérale de 248 px (tiroir sur mobile) pour l'enseignant et l'admin.
+- **Marque** : `frontend/public/brand/` (symbole couleur, blanc, noir, icône d'app, avatars) ; icônes d'installation PWA générées depuis `lingora-app-bleu.svg`.
+- Les écrans pas encore migrés utilisent une **couche de compatibilité** (`indigo-*`, `zinc-*` redirigés vers la charte dans `globals.css`) ; elle disparaîtra avec le dernier écran migré.
+
 ## Intégration continue (`.github/workflows/ci.yml`)
 
 À chaque pull request et à chaque push sur `main`, GitHub Actions exécute (une nouvelle poussée annule l'exécution précédente) :
