@@ -213,6 +213,26 @@ on les dépublie. La banque du test de niveau est un contenu système, invisible
 - Ordre : boutons ↑ ↓ (les éléments neufs se placent à la fin) ; toute opération est écrite dans `audit_logs`.
 - Éditer un exercice déjà publié modifie aussi sa correction pour les prochaines tentatives.
 
+## Abonnements et paiements (`/api/v1/billing`)
+
+Formule **gratuite** (quelques analyses Speaking par jour) et **Premium** (beaucoup plus d'analyses). L'équipe (enseignants, admin) n'est jamais limitée.
+
+| Route | Rôle |
+|---|---|
+| `GET /billing/plans` | Offres payantes (public) |
+| `GET /billing/me` | Mon accès : Premium ?, expiration, essai disponible, analyses restantes |
+| `POST /billing/trial` | Essai gratuit de 7 jours, une seule fois par élève |
+| `POST /billing/checkout` | Crée un paiement en attente et renvoie l'URL du fournisseur |
+| `POST /billing/payments/{id}/demo-confirm` | Simule le retour du fournisseur de démonstration (jamais en production) |
+| `POST /billing/webhooks/{fournisseur}` | Notification serveur signée (HMAC), idempotente |
+| `POST /billing/cancel` | Arrête le renouvellement ; l'accès reste valable jusqu'au terme |
+
+- Un paiement n'active l'abonnement que lorsqu'il est confirmé ; un renouvellement s'ajoute à la période restante.
+- **Prix = données** (table `plans`, seed `app/seed_billing.py`) : 15 000 Ar / 30 jours, provisoire, à fixer avant le lancement.
+- Réglages : `SPEAKING_FREE_DAILY_LIMIT` (3), `SPEAKING_DAILY_LIMIT` (Premium, 20), `TRIAL_DAYS`, `PAYMENT_PROVIDER` (`demo`), `PAYMENT_WEBHOOK_SECRET`.
+- Fournisseur `demo` : aucun argent réel, page de simulation dans l'app. **La production refuse `PAYMENT_PROVIDER=demo`** : brancher MVola / Orange Money / Airtel Money / Stripe revient à ajouter une classe dans `app/integrations/payment/`.
+- Interface : page **Premium** (`/billing`) dans le menu élève.
+
 ## Application installable (PWA)
 
 Lingora est installable sur l'écran d'accueil (manifeste `app/manifest.ts`, icônes `public/icons/`, service worker `public/sw.js` enregistré en production uniquement).

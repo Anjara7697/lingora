@@ -129,7 +129,7 @@ def test_audio_size_limit(client, auth, monkeypatch):
 
 
 def test_daily_limit_protects_ai_costs(client, auth, monkeypatch):
-    monkeypatch.setattr(config.settings, "speaking_daily_limit", 2)
+    monkeypatch.setattr(config.settings, "speaking_free_daily_limit", 2)
     sid = new_session(client, auth)
     assert send(client, auth, sid).status_code == 201 and send(client, auth, sid).status_code == 201
     r = send(client, auth, sid)

@@ -76,6 +76,11 @@ export function AppHeader() {
               <Link href="/speaking" className={link}>
                 Speaking
               </Link>
+              {user && (
+                <Link href="/billing" className={link}>
+                  Premium
+                </Link>
+              )}
             </>
           )}
           {student && (

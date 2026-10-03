@@ -9,6 +9,7 @@ from app.modules.admin.router import router as admin_router
 from app.modules.assessment.router import router as assessment_router
 from app.modules.auth.router import router as auth_router
 from app.modules.cms.router import router as cms_router
+from app.modules.commerce.router import router as billing_router
 from app.modules.health.router import router as health_router
 from app.modules.learning.router import router as learning_router
 from app.modules.platform.router import router as platform_router
@@ -47,5 +48,6 @@ api_v1.include_router(learning_router)
 api_v1.include_router(assessment_router)
 api_v1.include_router(speaking_router)
 api_v1.include_router(teacher_router)
+api_v1.include_router(billing_router)
 api_v1.include_router(platform_router)
 app.include_router(api_v1)

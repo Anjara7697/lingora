@@ -97,7 +97,16 @@ export default function SpeakingPracticePage() {
         <p className="mt-1 text-zinc-900">{scenario.context}</p>
       </section>
 
-      {error && <p role="alert" className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+      {error && (
+        <p role="alert" className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}{" "}
+          {error.includes("Premium") && (
+            <Link href="/billing" className="font-semibold underline">
+              Découvrir Premium
+            </Link>
+          )}
+        </p>
+      )}
 
       {!detail && (
         <Button onClick={begin} disabled={busy} className="w-full">

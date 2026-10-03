@@ -16,6 +16,7 @@ from app.integrations.ai import (
     normalize,
 )
 from app.integrations.storage import get_storage
+from app.modules.commerce.service import is_premium, speaking_daily_limit
 from app.modules.identity.models import User
 from app.modules.learning.models import Skill
 from app.modules.platform.models import Event
@@ -158,7 +159,7 @@ def get_session_detail(db: Session, user: User, session_id: uuid.UUID) -> dict:
     session = _own_session(db, user, session_id)
     return {
         **session_view(db, session),
-        "attempts_left_today": max(0, settings.speaking_daily_limit - attempts_today(db, user)),
+        "attempts_left_today": max(0, speaking_daily_limit(db, user) - attempts_today(db, user)),
     }
 
 
@@ -187,8 +188,9 @@ def submit_turn(
         raise AppError(413, "AUDIO_TOO_LARGE", "Enregistrement trop volumineux")
     if not 0 < duration_seconds <= settings.max_audio_seconds:
         raise AppError(422, "INVALID_DURATION", f"Durée invalide (maximum {settings.max_audio_seconds} s)")
-    if attempts_today(db, user) >= settings.speaking_daily_limit:
-        raise AppError(429, "DAILY_LIMIT_REACHED", "Limite quotidienne d'analyses atteinte, revenez demain")
+    if attempts_today(db, user) >= speaking_daily_limit(db, user):
+        hint = "" if is_premium(db, user) else " ou passez à Premium pour pratiquer davantage"
+        raise AppError(429, "DAILY_LIMIT_REACHED", f"Limite quotidienne d'analyses atteinte, revenez demain{hint}")
 
     scenario = db.get(SpeakingScenario, session.scenario_id)
     scenario_text = f"{scenario.title}. {scenario.context or ''}"

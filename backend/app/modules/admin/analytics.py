@@ -87,7 +87,9 @@ def compute(db: Session, now: datetime | None = None) -> dict:
     students_total = _count(db, _students())
     teachers_total = db.scalar(select(func.count()).select_from(User).where(
         User.role == UserRole.TEACHER, User.deleted_at.is_(None), User.status == UserStatus.ACTIVE))
-    new = lambda since: _count(db, _students().where(User.created_at >= since))
+
+    def new(since):
+        return _count(db, _students().where(User.created_at >= since))
 
     active7, active30 = _active_ids(db, d7), _active_ids(db, d30)
     placement_done = _distinct_students(
