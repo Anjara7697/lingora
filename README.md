@@ -1,5 +1,7 @@
 # Lingora — Learn. Speak. Grow.
 
+[![CI](https://github.com/Anjara7697/lingora/actions/workflows/ci.yml/badge.svg)](https://github.com/Anjara7697/lingora/actions/workflows/ci.yml)
+
 Plateforme d'apprentissage de l'anglais orientée pratique orale (Madagascar).
 Modular Monolith : **Next.js** (PWA) + **FastAPI** + **PostgreSQL**.
 
@@ -191,6 +193,19 @@ on les dépublie. La banque du test de niveau est un contenu système, invisible
   Pas encore de téléversement de fichiers.
 - Ordre : boutons ↑ ↓ (les éléments neufs se placent à la fin) ; toute opération est écrite dans `audit_logs`.
 - Éditer un exercice déjà publié modifie aussi sa correction pour les prochaines tentatives.
+
+## Intégration continue (`.github/workflows/ci.yml`)
+
+À chaque pull request et à chaque push sur `main`, GitHub Actions exécute (une nouvelle poussée annule l'exécution précédente) :
+
+| Job | Vérifie |
+| --- | --- |
+| **Backend** | `ruff`, `alembic upgrade head` puis `alembic check` (aucun écart modèles / migrations), `pytest` sur un vrai PostgreSQL 16 |
+| **Frontend** | `eslint`, `tsc --noEmit`, `next build` |
+| **Docker** | `docker compose config` sans `.env`, construction des images backend et frontend |
+
+Rejouer la même chose en local : `cd backend && ruff check . && alembic check && pytest` puis `cd frontend && npm run lint && npx tsc --noEmit && npm run build`.
+Conseil : dans les paramètres du dépôt (Settings → Branches), exiger ces 3 jobs avant de fusionner dans `main`.
 
 ## Workflow Git
 
