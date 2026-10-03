@@ -36,7 +36,22 @@ export function AppHeader() {
           Lingora
         </Link>
         <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-medium">
-          {isStaff(user?.role) ? (
+          {user?.role === "ADMIN" ? (
+            <>
+              <Link href="/admin" className={link}>
+                Statistiques
+              </Link>
+              <Link href="/admin/users" className={link}>
+                Utilisateurs
+              </Link>
+              <Link href="/admin/teachers" className={link}>
+                Enseignants
+              </Link>
+              <Link href="/teacher" className={link}>
+                Élèves
+              </Link>
+            </>
+          ) : isStaff(user?.role) ? (
             <Link href="/teacher" className={link}>
               Mes élèves
             </Link>

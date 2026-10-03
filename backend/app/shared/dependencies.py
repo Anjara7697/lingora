@@ -2,11 +2,19 @@ from typing import Annotated
 
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.security import decode_token
-from app.modules.identity.models import User, UserRole, UserStatus
+from app.modules.identity.models import (
+    Permission,
+    Role,
+    User,
+    UserRole,
+    UserStatus,
+    role_permissions,
+)
 from app.shared.errors import AppError
 
 DbSession = Annotated[Session, Depends(get_db)]
@@ -55,3 +63,26 @@ def get_optional_user(
 
 
 OptionalUser = Annotated[User | None, Depends(get_optional_user)]
+
+
+def has_permission(db: Session, user: User, code: str) -> bool:
+    return bool(
+        db.scalar(
+            select(func.count())
+            .select_from(Permission)
+            .join(role_permissions, role_permissions.c.permission_id == Permission.id)
+            .join(Role, Role.id == role_permissions.c.role_id)
+            .where(Role.code == user.role.value, Permission.code == code)
+        )
+    )
+
+
+def require_permission(code: str):
+    """Autorisation fine (architecture §27) : les permissions du rôle sont lues en base."""
+
+    def checker(user: CurrentUser, db: DbSession) -> User:
+        if not has_permission(db, user, code):
+            raise AppError(403, "FORBIDDEN", "Accès refusé : permission manquante")
+        return user
+
+    return checker
