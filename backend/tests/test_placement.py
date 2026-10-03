@@ -63,9 +63,10 @@ def test_start_resumes_the_open_attempt(client, auth, db):
 def test_answers_are_saved_and_can_change_and_resume(client, auth):
     data = start(client, auth)
     qid = data["questions"][0]["id"]
-    put = lambda v: client.put(
-        f"/api/v1/placement/{data['attempt_id']}/answers/{qid}", headers=auth, json={"answer": v}
-    )
+
+    def put(v):
+        return client.put(f"/api/v1/placement/{data['attempt_id']}/answers/{qid}", headers=auth, json={"answer": v})
+
     assert put(0).status_code == 204 and put(2).status_code == 204
     assert start(client, auth)["answers"] == {qid: 2}
 

@@ -38,9 +38,9 @@ def _prepare_test_database() -> bool:
 
 DB_AVAILABLE = _prepare_test_database()  # doit précéder tout import de `app`
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session  # noqa: E402
 
-from app.core.database import engine
+from app.core.database import engine  # noqa: E402
 
 
 @pytest.fixture
