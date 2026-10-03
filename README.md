@@ -61,6 +61,25 @@ pytest                                         # tests (ceux de la base sont ign
 
 Réponses au format `{data, meta, error}`. Documentation interactive : `/docs`.
 
+### Mot de passe oublié et limitation des tentatives
+
+| Méthode | Route | Description |
+| --- | --- | --- |
+| POST | `/auth/forgot-password` | Envoie un lien par email. **Même réponse (202) que le compte existe ou non** |
+| POST | `/auth/reset-password` | `{token, password, password_confirmation}` : change le mot de passe avec le lien reçu |
+
+- Le lien est **à usage unique**, valable **30 minutes** (`PASSWORD_RESET_MINUTES`) ; une nouvelle demande invalide les précédentes ;
+  3 demandes par heure et par compte au maximum. Seul le **hachage SHA-256** du jeton est stocké en base.
+- Après une réinitialisation (ou une réinitialisation par un admin), **toutes les sessions ouvertes de la personne sont fermées**
+  (les jetons émis avant le changement sont refusés, comparaison à la milliseconde).
+- Un compte suspendu ne reçoit pas de lien. Les erreurs d'envoi sont journalisées mais n'affectent jamais la réponse.
+- **Développement** (`EMAIL_BACKEND=console`, défaut) : le message, lien compris, est écrit dans les logs :
+  `docker compose logs backend | grep reset-password`. **Production** : `EMAIL_BACKEND=smtp` + `SMTP_*` + `APP_BASE_URL` ;
+  l'API **refuse de démarrer** en production avec le mode console.
+- **Limitation des tentatives** (429 + en-tête `Retry-After`) : connexion 8/min par adresse **et** par compte (40/min par adresse),
+  inscription 10 / 10 min, demandes de lien 3/h par adresse email, réinitialisations 10 / 15 min. Un bon mot de passe est aussi
+  refusé pendant le blocage. Compteurs en mémoire (par processus) ; `X-Forwarded-For` n'est lu que si `TRUST_PROXY_HEADERS=true`.
+
 ## Apprentissage (`/api/v1`)
 
 | Méthode | Route | Description |

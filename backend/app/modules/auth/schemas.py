@@ -52,3 +52,19 @@ class TokenPair(BaseModel):
 class AuthOut(BaseModel):
     user: UserOut
     tokens: TokenPair
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str = Field(min_length=20, max_length=200)
+    password: Password
+    password_confirmation: str
+
+    @model_validator(mode="after")
+    def _passwords_match(self):
+        if self.password != self.password_confirmation:
+            raise ValueError("La confirmation ne correspond pas au mot de passe")
+        return self

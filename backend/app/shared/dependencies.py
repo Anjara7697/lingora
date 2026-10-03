@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.security import decode_token
+from app.core.security import decode_token_claims
 from app.modules.identity.models import (
     Permission,
     Role,
@@ -21,15 +21,38 @@ DbSession = Annotated[Session, Depends(get_db)]
 _bearer = HTTPBearer(auto_error=False)
 
 
+def token_revoked(user: User, issued_ms: int, precise: bool = True) -> bool:
+    """Un jeton émis avant le dernier changement de mot de passe n'est plus valable.
+
+    Les jetons récents portent une date à la milliseconde (comparaison exacte) ; un jeton plus ancien, sans cette
+    précision, est comparé à la seconde.
+    """
+    changed = user.password_changed_at
+    if changed is None:
+        return False
+    changed_ms = int(changed.timestamp() * 1000)
+    return issued_ms < changed_ms if precise else issued_ms // 1000 < changed_ms // 1000
+
+
+def _user_from_token(db: Session, token: str) -> User | None:
+    claims = decode_token_claims(token, "access")
+    if claims is None:
+        return None
+    user_id, issued_ms, precise = claims
+    user = db.get(User, user_id)
+    if user is None or user.deleted_at is not None or user.status != UserStatus.ACTIVE or token_revoked(user, issued_ms, precise):
+        return None
+    return user
+
+
 def get_current_user(
     db: DbSession,
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
 ) -> User:
     if credentials is None:
         raise AppError(401, "NOT_AUTHENTICATED", "Authentification requise")
-    user_id = decode_token(credentials.credentials, "access")
-    user = db.get(User, user_id) if user_id else None
-    if user is None or user.deleted_at is not None or user.status != UserStatus.ACTIVE:
+    user = _user_from_token(db, credentials.credentials)
+    if user is None:
         raise AppError(401, "INVALID_TOKEN", "Jeton invalide ou expiré")
     return user
 
@@ -55,11 +78,7 @@ def get_optional_user(
     """Utilisateur connecté s'il y en a un ; None pour un visiteur (jeton absent ou invalide)."""
     if credentials is None:
         return None
-    user_id = decode_token(credentials.credentials, "access")
-    user = db.get(User, user_id) if user_id else None
-    if user is None or user.deleted_at is not None or user.status != UserStatus.ACTIVE:
-        return None
-    return user
+    return _user_from_token(db, credentials.credentials)
 
 
 OptionalUser = Annotated[User | None, Depends(get_optional_user)]

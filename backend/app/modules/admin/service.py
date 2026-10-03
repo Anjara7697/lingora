@@ -1,4 +1,5 @@
 import uuid
+from datetime import UTC, datetime
 
 from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
@@ -112,6 +113,7 @@ def reset_password(db: Session, actor: User, user_id: uuid.UUID, password: str) 
     """Réinitialisation par un admin (en attendant la récupération par email)."""
     user = _user(db, user_id)
     user.password_hash = hash_password(password)
+    user.password_changed_at = datetime.now(UTC)  # ferme les sessions ouvertes de cette personne
     record_audit(db, actor, "PASSWORD_RESET_BY_ADMIN", "user", user.id)
     db.commit()
 

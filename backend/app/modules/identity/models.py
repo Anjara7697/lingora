@@ -2,7 +2,7 @@ import enum
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import Column, Date, DateTime, ForeignKey, String, Table, Text
+from sqlalchemy import Column, Date, DateTime, ForeignKey, String, Table, Text, text
 from sqlalchemy.dialects.postgresql import CITEXT, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -49,6 +49,8 @@ class User(UUIDPk, Timestamps, SoftDelete, Base):
     )
     email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Tout jeton émis avant cette date est refusé (réinitialisation de mot de passe).
+    password_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     profile: Mapped["UserProfile | None"] = relationship(back_populates="user", uselist=False)
 
@@ -66,6 +68,20 @@ class UserProfile(UUIDPk, Timestamps, Base):
     bio: Mapped[str | None] = mapped_column(Text)
 
     user: Mapped[User] = relationship(back_populates="profile")
+
+
+class PasswordResetToken(UUIDPk, Base):
+    """Jeton de réinitialisation : seul son hachage SHA-256 est stocké, usage unique, durée limitée."""
+
+    __tablename__ = "password_reset_tokens"
+
+    user_id: Mapped[uuid.UUID] = fk("users.id", index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=text("now()")
+    )
 
 
 class Role(UUIDPk, Base):

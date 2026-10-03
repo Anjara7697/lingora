@@ -34,7 +34,10 @@ def create_token(user_id: str, token_type: TokenType) -> str:
         "media": timedelta(minutes=settings.media_token_minutes),  # URL signée à courte durée de vie
     }[token_type]
     now = datetime.now(UTC)
-    payload = {"sub": user_id, "type": token_type, "iat": now, "exp": now + delta}
+    # iat_ms : date d'émission à la milliseconde (le `iat` standard n'a que la seconde), pour pouvoir révoquer
+    # exactement les jetons émis avant un changement de mot de passe.
+    payload = {"sub": user_id, "type": token_type, "iat": now, "iat_ms": int(now.timestamp() * 1000),
+               "exp": now + delta}
     return jwt.encode(payload, settings.jwt_secret, algorithm=ALGORITHM)
 
 
@@ -47,3 +50,20 @@ def decode_token(token: str, expected_type: TokenType) -> str | None:
     if payload.get("type") != expected_type:
         return None
     return payload.get("sub")
+
+
+def decode_token_claims(token: str, expected_type: TokenType) -> tuple[str, int, bool] | None:
+    """Comme decode_token, mais retourne aussi (sub, date d'émission en ms, précise ?).
+
+    `précise` est faux pour un jeton sans `iat_ms` (précision à la seconde seulement).
+    """
+    try:
+        payload = jwt.decode(token, settings.jwt_secret, algorithms=[ALGORITHM])
+    except jwt.PyJWTError:
+        return None
+    if payload.get("type") != expected_type or not payload.get("sub"):
+        return None
+    if isinstance(payload.get("iat_ms"), int):
+        return payload["sub"], payload["iat_ms"], True
+    iat = payload.get("iat")
+    return payload["sub"], int(iat) * 1000 if isinstance(iat, int | float) else 0, False
