@@ -19,7 +19,12 @@ class Settings(BaseSettings):
     max_audio_seconds: int = 180
     media_token_minutes: int = 5
     ai_provider: str = "demo"
-    speaking_daily_limit: int = 20  # tentatives d'analyse IA par utilisateur et par jour
+    speaking_daily_limit: int = 20  # Premium : tentatives d'analyse IA par jour (plafond anti-abus)
+    speaking_free_daily_limit: int = 3  # gratuit : tentatives d'analyse IA par jour
+    # Abonnements et paiements
+    payment_provider: str = "demo"  # "demo" (simulation sans argent réel) ; MVola/Orange Money/Stripe à venir
+    payment_webhook_secret: str = "dev-only-webhook-secret"
+    trial_days: int = 7
     # Emails (récupération de mot de passe)
     email_backend: str = "console"  # "console" (développement : le message est écrit dans les logs) | "smtp"
     email_from: str = "Lingora <no-reply@lingora.local>"
@@ -38,6 +43,8 @@ class Settings(BaseSettings):
         if self.environment == "production":
             if self.jwt_secret == DEFAULT_JWT_SECRET:
                 raise RuntimeError("JWT_SECRET doit être défini en production")
+            if self.payment_provider == "demo":
+                raise RuntimeError("PAYMENT_PROVIDER doit être un vrai fournisseur en production (« demo » simule les paiements)")
             if self.email_backend == "console":
                 # le backend console écrit les liens de réinitialisation dans les logs : jamais en production
                 raise RuntimeError("EMAIL_BACKEND=smtp (avec SMTP_HOST) est obligatoire en production")

@@ -23,6 +23,7 @@ from app.modules.learning.models import (
     Program,
     Skill,
 )
+from app.seed_billing import seed_billing
 from app.seed_placement import seed_placement
 from app.seed_speaking import seed_speaking
 
@@ -333,6 +334,7 @@ def main() -> None:
         seed_demo_content(db)
         seed_placement(db)
         seed_speaking(db)
+        seed_billing(db)
         seed_demo_staff(db)
     print("Contenu de démonstration prêt.")
 

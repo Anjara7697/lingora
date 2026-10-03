@@ -257,9 +257,12 @@ def test_full_flow_over_real_smtp(client, user, smtp_server):
 
 def test_production_refuses_the_console_email_backend_and_incomplete_smtp():
     strong = "s" * 40
+    prod = {"environment": "production", "jwt_secret": strong, "payment_provider": "mvola"}
     with pytest.raises(RuntimeError, match="EMAIL_BACKEND"):
-        Settings(environment="production", jwt_secret=strong, email_backend="console").validate_for_runtime()
+        Settings(**prod, email_backend="console").validate_for_runtime()
     with pytest.raises(RuntimeError, match="SMTP_HOST"):
-        Settings(environment="production", jwt_secret=strong, email_backend="smtp", smtp_host="").validate_for_runtime()
-    Settings(environment="production", jwt_secret=strong, email_backend="smtp", smtp_host="smtp.example.com").validate_for_runtime()
+        Settings(**prod, email_backend="smtp", smtp_host="").validate_for_runtime()
+    with pytest.raises(RuntimeError, match="PAYMENT_PROVIDER"):
+        Settings(**{**prod, "payment_provider": "demo"}, email_backend="smtp", smtp_host="smtp.example.com").validate_for_runtime()
+    Settings(**prod, email_backend="smtp", smtp_host="smtp.example.com").validate_for_runtime()
     Settings(environment="development", email_backend="console").validate_for_runtime()  # le dev reste simple
