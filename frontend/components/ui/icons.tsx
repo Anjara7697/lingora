@@ -180,3 +180,32 @@ export const UserIcon = (p: IconProps) => (
     <path d="M4 20a8 8 0 0 1 16 0" />
   </Icon>
 );
+export const CardIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="3" y="5" width="18" height="14" rx="2" />
+    <path d="M3 10h18M7 15h4" />
+  </Icon>
+);
+export const MoreIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="12" cy="5" r="1.2" fill="currentColor" />
+    <circle cx="12" cy="12" r="1.2" fill="currentColor" />
+    <circle cx="12" cy="19" r="1.2" fill="currentColor" />
+  </Icon>
+);
+export const UsersIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="9" cy="8" r="3.5" />
+    <path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5a6.5 6.5 0 0 1 3.5 5.5" />
+  </Icon>
+);
+export const ArrowUpIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M12 19V5m-6 6 6-6 6 6" />
+  </Icon>
+);
+export const ArrowDownIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M12 5v14m-6-6 6 6 6-6" />
+  </Icon>
+);

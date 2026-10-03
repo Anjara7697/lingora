@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useAuth } from "@/features/auth/AuthProvider";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { Chip } from "@/components/ui/Chip";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState, ErrorState } from "@/components/ui/States";
 import { ChevronRightIcon, SearchIcon, UserIcon } from "@/components/ui/icons";
@@ -243,15 +244,3 @@ function Kpi({ label, value, sub }: { label: string; value: number; sub?: string
   );
 }
 
-function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={`h-9 rounded-full px-3.5 text-[13px] font-semibold ${active ? "bg-ink text-white" : "bg-surface text-ink shadow-[inset_0_0_0_1.5px_#cbd5e1]"}`}
-    >
-      {children}
-    </button>
-  );
-}

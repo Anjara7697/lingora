@@ -11,6 +11,7 @@ export function ConfirmSheet({
   confirmLabel,
   cancelLabel,
   busy = false,
+  tone = "danger",
   onConfirm,
   onCancel,
   children,
@@ -20,6 +21,8 @@ export function ConfirmSheet({
   confirmLabel: string;
   cancelLabel: string;
   busy?: boolean;
+  /** « danger » (bouton rouge) pour une action destructive, « neutral » (bleu nuit) pour une action réversible. */
+  tone?: "danger" | "neutral";
   onConfirm: () => void;
   onCancel: () => void;
   children: React.ReactNode;
@@ -40,7 +43,7 @@ export function ConfirmSheet({
         <span aria-hidden className="h-1 w-10 self-center rounded-full bg-slate-300" />
         <h2 className="font-display text-xl font-bold text-ink">{title}</h2>
         <p className="text-[15px] leading-[1.55] text-ink-2">{children}</p>
-        <Button variant="danger" onClick={onConfirm} loading={busy}>
+        <Button variant={tone === "danger" ? "danger" : "primary"} onClick={onConfirm} loading={busy}>
           {confirmLabel}
         </Button>
         <button

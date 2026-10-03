@@ -3,8 +3,12 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
-import { Button } from "@/components/ui/Field";
+import { Button } from "@/components/ui/Button";
+import { Dialog } from "@/components/ui/Dialog";
+import { EmptyState, ErrorState } from "@/components/ui/States";
+import { MicIcon } from "@/components/ui/icons";
 import { useRequireRole } from "@/features/auth/useRequireRole";
+import { ListSkeleton, Tag } from "@/features/admin/ui";
 import { DIFFICULTY_LABEL, Field, Notice, inputCls, smallBtn } from "@/features/cms/ui";
 import { createScenario, errorMessages, listScenarios, setPublished, updateScenario } from "@/lib/api/cms";
 import type { Role } from "@/types/api";
@@ -16,15 +20,20 @@ const EMPTY = { title: "", description: "", context: "", difficulty: "BEGINNER" 
 export default function ScenariosPage() {
   const allowed = useRequireRole(EDITORS);
   const [items, setItems] = useState<CmsScenario[] | null>(null);
+  const [failed, setFailed] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [ok, setOk] = useState<string[]>([]);
   const [editing, setEditing] = useState<string | "new" | null>(null);
   const [form, setForm] = useState(EMPTY);
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(() => {
     listScenarios()
-      .then(setItems)
-      .catch((e) => setErrors(errorMessages(e)));
+      .then((r) => {
+        setItems(r);
+        setFailed(false);
+      })
+      .catch(() => setFailed(true));
   }, []);
   useEffect(() => {
     if (allowed) load();
@@ -40,43 +49,99 @@ export default function ScenariosPage() {
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setErrors([]);
+    setBusy(true);
     const body = { title: form.title, description: form.description || undefined, context: form.context, difficulty: form.difficulty, estimated_minutes: form.minutes ? Number(form.minutes) : null };
     try {
       if (editing === "new") await createScenario(body);
       else await updateScenario(editing as string, body);
-      setOk([editing === "new" ? "Situation créée (brouillon)." : "Situation enregistrée."]);
+      setOk([editing === "new" ? "Scénario créé (brouillon)." : "Scénario enregistré."]);
       setEditing(null);
       load();
     } catch (err) {
       setErrors(errorMessages(err));
+    } finally {
+      setBusy(false);
     }
   }
 
   async function toggle(s: CmsScenario) {
     setErrors([]);
+    setOk([]);
     try {
       await setPublished("scenarios", s.id, !s.is_published);
-      setOk([s.is_published ? "Situation dépubliée." : "Situation publiée : les élèves peuvent la pratiquer."]);
+      setOk([s.is_published ? "Scénario dépublié." : "Scénario publié : les élèves peuvent le pratiquer."]);
       load();
     } catch (err) {
       setErrors(errorMessages(err));
     }
   }
 
-  if (!allowed) return <p className="text-zinc-500">Chargement…</p>;
+  if (!allowed) return null;
 
   return (
     <>
-      <Link href="/admin/content" className="text-sm text-indigo-600 hover:underline">← Contenu</Link>
-      <div className="mb-3 mt-2 flex items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold text-zinc-900">Situations d&apos;oral</h1>
-        <Button onClick={() => edit(null)}>Nouvelle situation</Button>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="font-display text-[28px] font-bold leading-tight text-ink">Contenu</h1>
+        <Button onClick={() => edit(null)} className="h-11 px-4">
+          Nouveau scénario
+        </Button>
       </div>
-      <Notice kind="error" messages={errors} />
-      <Notice kind="success" messages={ok} />
 
-      {editing && (
-        <form onSubmit={save} className="mb-4 grid gap-3 rounded-xl border border-indigo-200 bg-indigo-50 p-4" aria-label="Formulaire de situation">
+      <div role="tablist" aria-label="Type de contenu" className="mt-4 flex gap-1 rounded-md bg-ink-tint p-1">
+        <Link role="tab" aria-selected={false} href="/admin/content" className="flex h-10 flex-1 items-center justify-center rounded-[10px] text-sm font-semibold text-ink-2">
+          Programmes
+        </Link>
+        <span role="tab" aria-selected className="flex h-10 flex-1 items-center justify-center rounded-[10px] bg-surface text-sm font-semibold text-ink shadow-card">
+          Scénarios Speaking{items ? ` · ${items.length}` : ""}
+        </span>
+      </div>
+
+      <div className="mt-4">
+        <Notice kind="error" messages={errors} />
+        <Notice kind="success" messages={ok} />
+        {failed && !items ? (
+          <ErrorState title="Scénarios indisponibles" onRetry={load} />
+        ) : !items ? (
+          <ListSkeleton />
+        ) : items.length === 0 ? (
+          <EmptyState icon={<MicIcon size={28} />} title="Aucun scénario" action={<Button onClick={() => edit(null)}>Nouveau scénario</Button>}>
+            Un scénario donne à l&apos;élève une situation à jouer à voix haute.
+          </EmptyState>
+        ) : (
+          <ul className="grid gap-2.5">
+            {items.map((s) => (
+              <li key={s.id} className="rounded-lg bg-surface p-4 shadow-card">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1 basis-56">
+                    <p className="font-semibold text-ink">{s.title}</p>
+                    <p className="text-[13px] text-muted">
+                      Scénario · {DIFFICULTY_LABEL[s.difficulty]}
+                      {s.estimated_minutes ? ` · ${s.estimated_minutes} min` : ""}
+                    </p>
+                  </div>
+                  <Tag tone={s.is_published ? "brand" : "outline"}>{s.is_published ? "Publié" : "Brouillon"}</Tag>
+                </div>
+                <p className="mt-2 text-[15px] text-ink-2">{s.context}</p>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <button type="button" className={smallBtn} onClick={() => edit(s)}>
+                    Modifier
+                  </button>
+                  <button type="button" role="switch" aria-checked={s.is_published} onClick={() => void toggle(s)} className="inline-flex h-10 items-center gap-2.5 px-1 text-sm font-semibold text-ink">
+                    <span className={`flex h-6 w-11 items-center rounded-full p-0.5 transition ${s.is_published ? "bg-brand-strong" : "bg-slate-300"}`}>
+                      <span className={`h-5 w-5 rounded-full bg-white transition-transform ${s.is_published ? "translate-x-5" : ""}`} />
+                    </span>
+                    {s.is_published ? "Publié" : "Dépublié"}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <Dialog open={editing !== null} title={editing === "new" ? "Nouveau scénario" : "Modifier le scénario"} onClose={() => setEditing(null)}>
+        <form onSubmit={save} className="flex flex-col gap-3.5" aria-label="Formulaire de scénario">
+          <Notice kind="error" messages={errors} />
           <Field label="Titre (en français)">
             <input className={inputCls} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
           </Field>
@@ -98,33 +163,11 @@ export default function ScenariosPage() {
               <input className={inputCls} type="number" min={1} max={60} value={form.minutes} onChange={(e) => setForm({ ...form, minutes: e.target.value })} />
             </Field>
           </div>
-          <div className="flex gap-2">
-            <Button type="submit" disabled={!form.title.trim() || form.context.trim().length < 10}>Enregistrer</Button>
-            <button type="button" className={smallBtn} onClick={() => setEditing(null)}>Annuler</button>
-          </div>
+          <Button type="submit" loading={busy} disabled={!form.title.trim() || form.context.trim().length < 10}>
+            Enregistrer
+          </Button>
         </form>
-      )}
-
-      <ul className="grid gap-3">
-        {items?.map((s) => (
-          <li key={s.id} className="rounded-xl border border-zinc-200 bg-white p-4">
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <div>
-                <p className="font-semibold text-zinc-900">{s.title}</p>
-                <p className="text-xs text-zinc-500">{DIFFICULTY_LABEL[s.difficulty]}{s.estimated_minutes ? ` · ${s.estimated_minutes} min` : ""}</p>
-              </div>
-              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${s.is_published ? "bg-green-100 text-green-800" : "bg-zinc-100 text-zinc-700"}`}>
-                {s.is_published ? "Publié" : "Brouillon"}
-              </span>
-            </div>
-            <p className="mt-2 text-sm text-zinc-700">{s.context}</p>
-            <div className="mt-3 flex gap-2">
-              <button className={smallBtn} onClick={() => edit(s)}>Modifier</button>
-              <button className={smallBtn} onClick={() => toggle(s)}>{s.is_published ? "Dépublier" : "Publier"}</button>
-            </div>
-          </li>
-        ))}
-      </ul>
+      </Dialog>
     </>
   );
 }

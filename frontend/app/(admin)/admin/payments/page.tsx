@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
+import { Chip } from "@/components/ui/Chip";
+import { EmptyState, ErrorState } from "@/components/ui/States";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { CardIcon } from "@/components/ui/icons";
 import { useRequireRole } from "@/features/auth/useRequireRole";
+import { ListSkeleton, Pager, Tag, money } from "@/features/admin/ui";
 import { getBillingSummary, listPayments } from "@/lib/api/admin";
 import { formatDate } from "@/lib/time";
 import type { Role } from "@/types/api";
@@ -11,22 +16,18 @@ import type { BillingSummary, PaymentPage, PaymentStatus } from "@/types/admin";
 const ADMIN: Role[] = ["ADMIN"];
 const PAGE = 20;
 const STATUS_LABEL: Record<PaymentStatus, string> = {
-  PENDING: "En attente",
   SUCCESS: "Payé",
+  PENDING: "En attente",
   FAILED: "Échoué",
   REFUNDED: "Remboursé",
   CANCELLED: "Annulé",
 };
-const money = (amount: string, currency: string) =>
-  `${Number(amount).toLocaleString("fr-FR")} ${currency === "MGA" ? "Ar" : currency}`;
+const ORDER: PaymentStatus[] = ["SUCCESS", "PENDING", "FAILED", "REFUNDED", "CANCELLED"];
+const PROVIDER: Record<string, string> = { demo: "Démo", mvola: "MVola", orange_money: "Orange Money", airtel_money: "Airtel Money", stripe: "Carte" };
 
-function Kpi({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-3">
-      <p className="text-xs text-zinc-500">{label}</p>
-      <p className="text-xl font-bold text-zinc-900">{value}</p>
-    </div>
-  );
+function StatusTag({ s }: { s: PaymentStatus }) {
+  const tone = { SUCCESS: "brand", PENDING: "outline", FAILED: "solid", REFUNDED: "tint", CANCELLED: "muted" }[s] as "brand" | "outline" | "solid" | "tint" | "muted";
+  return <Tag tone={tone}>{STATUS_LABEL[s]}</Tag>;
 }
 
 export default function AdminPaymentsPage() {
@@ -35,95 +36,149 @@ export default function AdminPaymentsPage() {
   const [page, setPage] = useState<PaymentPage | null>(null);
   const [status, setStatus] = useState<PaymentStatus | "">("");
   const [offset, setOffset] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (!allowed) return;
     getBillingSummary()
-      .then(setSummary)
-      .catch((e: Error) => setError(e.message));
-  }, [allowed]);
+      .then((r) => {
+        setSummary(r);
+        setFailed(false);
+      })
+      .catch(() => setFailed(true));
+  }, [allowed, attempt]);
 
   useEffect(() => {
     if (!allowed) return;
     listPayments({ status, offset, limit: PAGE })
-      .then(setPage)
-      .catch((e: Error) => setError(e.message));
-  }, [allowed, status, offset]);
+      .then((r) => {
+        setPage(r);
+        setFailed(false);
+      })
+      .catch(() => setFailed(true));
+  }, [allowed, status, offset, attempt]);
 
-  if (!allowed) return <p className="text-zinc-500">Chargement…</p>;
-  if (error) return <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>;
-  if (!summary || !page) return <p className="text-zinc-500">Chargement…</p>;
+  const retry = useCallback(() => {
+    setFailed(false);
+    setAttempt((n) => n + 1);
+  }, []);
 
-  const conversion = summary.trials_started
-    ? `${Math.round((summary.trials_converted / summary.trials_started) * 100)} %`
-    : "—";
+  if (!allowed) return null;
+  if (failed && (!summary || !page)) return <ErrorState title="Paiements indisponibles" onRetry={retry} />;
+
+  const conversion = summary && summary.trials_started ? `${Math.round((summary.trials_converted / summary.trials_started) * 100)} %` : "—";
+  const total = summary ? ORDER.reduce((n, s) => n + summary.payments_by_status[s], 0) : 0;
+  const rev = summary?.revenue[0];
 
   return (
     <>
-      <h1 className="text-2xl font-bold text-zinc-900">Paiements</h1>
+      <h1 className="font-display text-[28px] font-bold leading-tight text-ink">Paiements</h1>
 
-      <section className="my-4 grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Indicateurs">
-        {summary.revenue.length === 0 && <Kpi label="Revenus" value="0" />}
-        {summary.revenue.map((r) => (
-          <div key={r.currency} className="col-span-2 rounded-2xl bg-indigo-600 p-4 text-white">
-            <p className="text-xs uppercase tracking-wide text-indigo-200">Revenus ({r.payments} paiement(s))</p>
-            <p className="text-3xl font-bold">{money(r.total, r.currency)}</p>
-            <p className="text-sm text-indigo-100">dont {money(r.last_30d, r.currency)} sur 30 jours</p>
-          </div>
-        ))}
-        <Kpi label="Abonnés payants" value={summary.active_paid} />
-        <Kpi label="Essais en cours" value={summary.active_trials} />
-        <Kpi label="Essais démarrés" value={summary.trials_started} />
-        <Kpi label="Essai → achat" value={conversion} />
-      </section>
-
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="font-semibold text-zinc-900">Historique ({page.total})</h2>
-        <select
-          value={status}
-          onChange={(e) => {
-            setStatus(e.target.value as PaymentStatus | "");
-            setOffset(0);
-          }}
-          aria-label="Filtrer par statut"
-          className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm"
-        >
-          <option value="">Tous les statuts</option>
-          {(Object.keys(STATUS_LABEL) as PaymentStatus[]).map((s) => (
-            <option key={s} value={s}>
-              {STATUS_LABEL[s]} ({summary.payments_by_status[s]})
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <ul className="grid gap-2">
-        {page.items.map((p) => (
-          <li key={p.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm">
-            <span>
-              <span className="font-medium text-zinc-900">{p.student_name}</span>
-              <span className="block text-xs text-zinc-500">{p.student_email}</span>
-            </span>
-            <span className="font-semibold">{money(p.amount, p.currency)}</span>
-            <span className="text-zinc-600">
-              {STATUS_LABEL[p.status]} · {p.provider} · {formatDate(p.paid_at ?? p.created_at)}
-            </span>
-          </li>
-        ))}
-        {page.items.length === 0 && <li className="text-sm text-zinc-500">Aucun paiement.</li>}
-      </ul>
-
-      {page.total > PAGE && (
-        <div className="mt-4 flex justify-between text-sm">
-          <button disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - PAGE))} className="rounded-lg border border-zinc-300 px-3 py-1.5 disabled:opacity-50">
-            Précédent
-          </button>
-          <button disabled={offset + PAGE >= page.total} onClick={() => setOffset(offset + PAGE)} className="rounded-lg border border-zinc-300 px-3 py-1.5 disabled:opacity-50">
-            Suivant
-          </button>
+      {!summary ? (
+        <div className="mt-5 grid grid-cols-2 gap-3" aria-busy="true">
+          <Skeleton className="col-span-2 h-28" />
+          <Skeleton className="h-20" />
+          <Skeleton className="h-20" />
         </div>
+      ) : (
+        <section className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Indicateurs">
+          <div className="col-span-2 rounded-lg bg-ink p-4 text-white">
+            <p className="text-[12px] font-semibold uppercase tracking-wide text-white/70">Revenus · {rev?.payments ?? 0} paiement{(rev?.payments ?? 0) > 1 ? "s" : ""}</p>
+            <p className="mt-1 font-display text-[32px] font-bold">{rev ? money(rev.total, rev.currency) : "0 Ar"}</p>
+            {rev && <p className="text-sm text-white/80">dont {money(rev.last_30d, rev.currency)} sur 30 jours</p>}
+          </div>
+          <Kpi label="Abonnés payants" value={summary.active_paid} />
+          <Kpi label="Essais en cours" value={summary.active_trials} />
+          <Kpi label="Essais démarrés" value={summary.trials_started} />
+          <Kpi label="Essai → achat" value={conversion} />
+        </section>
       )}
+
+      {summary && (
+        <>
+          <h2 className="mb-3 mt-6 font-display text-lg font-bold text-ink">Historique · {total}</h2>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrer par statut">
+            <Chip active={status === ""} onClick={() => { setStatus(""); setOffset(0); }}>
+              Tous · {total}
+            </Chip>
+            {ORDER.map((s) => (
+              <Chip key={s} active={status === s} onClick={() => { setStatus(status === s ? "" : s); setOffset(0); }}>
+                {STATUS_LABEL[s]} · {summary.payments_by_status[s]}
+              </Chip>
+            ))}
+          </div>
+        </>
+      )}
+
+      <div className="mt-4">
+        {!page ? (
+          <ListSkeleton />
+        ) : page.items.length === 0 ? (
+          <EmptyState icon={<CardIcon size={28} />} title="Aucun paiement pour l'instant">
+            Les abonnements apparaîtront ici dès le premier achat.
+          </EmptyState>
+        ) : (
+          <>
+            <div className="hidden overflow-hidden rounded-lg bg-surface shadow-card md:block">
+              <table className="w-full text-left text-[15px]">
+                <thead className="text-[12px] uppercase tracking-wide text-muted">
+                  <tr className="h-10">
+                    <th className="pl-4 font-semibold">Élève</th>
+                    <th className="font-semibold">Montant</th>
+                    <th className="font-semibold">Statut</th>
+                    <th className="font-semibold">Moyen</th>
+                    <th className="pr-4 font-semibold">Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {page.items.map((p) => (
+                    <tr key={p.id} className="h-16 border-t border-line">
+                      <td className="pl-4">
+                        <span className="block font-semibold text-ink">{p.student_name}</span>
+                        <span className="text-[13px] text-muted">{p.student_email}</span>
+                      </td>
+                      <td className="font-semibold tabular-nums text-ink">{money(p.amount, p.currency)}</td>
+                      <td>
+                        <StatusTag s={p.status} />
+                      </td>
+                      <td className="text-ink-2">{PROVIDER[p.provider.toLowerCase()] ?? p.provider}</td>
+                      <td className="pr-4 text-ink-2">{formatDate(p.paid_at ?? p.created_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <ul className="grid gap-2.5 md:hidden">
+              {page.items.map((p) => (
+                <li key={p.id} className="flex flex-col gap-1.5 rounded-lg bg-surface p-4 shadow-card">
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="font-semibold text-ink">{p.student_name}</span>
+                    <StatusTag s={p.status} />
+                  </span>
+                  <span className="text-[13px] text-muted">{p.student_email}</span>
+                  <span className="flex justify-between text-sm text-ink-2">
+                    <b className="font-semibold tabular-nums text-ink">{money(p.amount, p.currency)}</b>
+                    <span>
+                      {PROVIDER[p.provider.toLowerCase()] ?? p.provider} · {formatDate(p.paid_at ?? p.created_at)}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <Pager offset={offset} page={PAGE} total={page.total} onChange={setOffset} />
+          </>
+        )}
+      </div>
     </>
+  );
+}
+
+function Kpi({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="rounded-lg bg-surface p-3.5 shadow-card">
+      <p className="text-[13px] font-semibold text-muted">{label}</p>
+      <p className="font-display text-[26px] font-bold text-ink">{value}</p>
+    </div>
   );
 }
