@@ -71,8 +71,8 @@ jobs:
       - run: npm ci
       - name: Lint
         run: npm run lint
-      - name: Types
-        run: npx tsc --noEmit
+      - name: Types (génère d'abord les types de routes Next.js, absents d'un clone neuf)
+        run: npm run typecheck
       - name: Build
         run: npm run build
 

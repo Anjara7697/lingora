@@ -201,10 +201,10 @@ on les dépublie. La banque du test de niveau est un contenu système, invisible
 | Job | Vérifie |
 | --- | --- |
 | **Backend** | `ruff`, `alembic upgrade head` puis `alembic check` (aucun écart modèles / migrations), `pytest` sur un vrai PostgreSQL 16 |
-| **Frontend** | `eslint`, `tsc --noEmit`, `next build` |
+| **Frontend** | `eslint`, `npm run typecheck` (types de routes Next.js puis `tsc`), `next build` |
 | **Docker** | `docker compose config` sans `.env`, construction des images backend et frontend |
 
-Rejouer la même chose en local : `cd backend && ruff check . && alembic check && pytest` puis `cd frontend && npm run lint && npx tsc --noEmit && npm run build`.
+Rejouer la même chose en local : `cd backend && ruff check . && alembic check && pytest` puis `cd frontend && npm run lint && npm run typecheck && npm run build`.
 Conseil : dans les paramètres du dépôt (Settings → Branches), exiger ces 3 jobs avant de fusionner dans `main`.
 
 ## Workflow Git
