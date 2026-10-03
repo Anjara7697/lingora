@@ -139,7 +139,7 @@ export default function SpeakingPracticePage() {
 
             {rec.phase === "recorded" && (
               <div className="grid gap-3">
-                <audio controls src={rec.previewUrl ?? undefined} className="w-full" />
+                <audio controls preload="none" src={rec.previewUrl ?? undefined} className="w-full" />
                 <label className="grid gap-1 text-sm">
                   <span className="font-medium text-zinc-800">
                     {rec.sttAvailable ? "Transcription (vérifiez-la)" : "Que venez-vous de dire ? (mode démo)"}
@@ -175,7 +175,7 @@ export default function SpeakingPracticePage() {
         <section className="mt-5 rounded-xl border border-zinc-200 bg-white p-4" aria-label="Feedback">
           <h2 className="mb-1 font-semibold text-zinc-900">Feedback — tentative {latest.sequence_number}</h2>
           {latest.transcript && <p className="mb-1 text-sm italic text-zinc-600">« {latest.transcript} »</p>}
-          {latest.audio_url && <audio controls src={mediaUrl(latest.audio_url)} className="mb-3 w-full" />}
+          {latest.audio_url && <audio controls preload="none" src={mediaUrl(latest.audio_url)} className="mb-3 w-full" />}
           <AnalysisCard analysis={latest.analysis} overall={latest.overall_score} />
           {detail && !completed && rec.phase === "idle" && (
             <div className="mt-4 flex flex-wrap gap-2">

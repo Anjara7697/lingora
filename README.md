@@ -213,6 +213,15 @@ on les dépublie. La banque du test de niveau est un contenu système, invisible
 - Ordre : boutons ↑ ↓ (les éléments neufs se placent à la fin) ; toute opération est écrite dans `audit_logs`.
 - Éditer un exercice déjà publié modifie aussi sa correction pour les prochaines tentatives.
 
+## Application installable (PWA)
+
+Lingora est installable sur l'écran d'accueil (manifeste `app/manifest.ts`, icônes `public/icons/`, service worker `public/sw.js` enregistré en production uniquement).
+
+- Le service worker met en cache la coque applicative (`/_next/static`, icônes) et affiche la page `/offline` quand une navigation échoue sans réseau.
+- L'API (`/api/*`) et l'audio ne sont **jamais** mis en cache : données toujours à jour et privées.
+- Un bandeau signale la perte de connexion ; une invitation « Installer » apparaît quand le navigateur le permet.
+- Limites actuelles : pas de leçons hors ligne (prévu en V2). Sur téléphone, l'installation exige HTTPS (`localhost` fait exception).
+
 ## Intégration continue (`.github/workflows/ci.yml`)
 
 À chaque pull request et à chaque push sur `main`, GitHub Actions exécute (une nouvelle poussée annule l'exécution précédente) :
