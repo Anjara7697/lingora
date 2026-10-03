@@ -12,7 +12,14 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.integrations.payment import PaymentProviderError, get_provider
-from app.modules.commerce.models import Payment, PaymentStatus, Plan, PlanFeature, Subscription, SubscriptionStatus
+from app.modules.commerce.models import (
+    Payment,
+    PaymentStatus,
+    Plan,
+    PlanFeature,
+    Subscription,
+    SubscriptionStatus,
+)
 from app.modules.identity.models import User, UserRole
 from app.modules.platform.models import Event
 from app.shared.errors import AppError

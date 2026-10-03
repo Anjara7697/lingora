@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.security import create_token
-from app.modules.commerce.service import is_premium, speaking_daily_limit
 from app.integrations.ai import (
     AIProviderError,
     TranscriptRequired,
@@ -17,6 +16,7 @@ from app.integrations.ai import (
     normalize,
 )
 from app.integrations.storage import get_storage
+from app.modules.commerce.service import is_premium, speaking_daily_limit
 from app.modules.identity.models import User
 from app.modules.learning.models import Skill
 from app.modules.platform.models import Event

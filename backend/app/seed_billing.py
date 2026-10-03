@@ -12,9 +12,9 @@ from app.modules.commerce.models import Plan, PlanFeature
 
 PLANS = [
     # (slug, nom, description, prix MGA, durée en jours, avantages affichés)
-    ("premium-trial", "Essai gratuit", "7 jours de Premium offerts, une seule fois.", Decimal("0"), 7, []),
+    ("premium-trial", "Essai gratuit", "7 jours de Premium offerts, une seule fois.", Decimal(0), 7, []),
     ("premium-monthly", "Premium mensuel", "Pratiquez l'oral bien plus qu'en formule gratuite, pendant 30 jours.",
-     Decimal("15000"), 30,
+     Decimal(15000), 30,
      [("speaking_extended", "Speaking Lab : bien plus d'analyses de votre voix chaque jour")]),
 ]
 
