@@ -48,7 +48,7 @@ export default function TeacherSessionPage() {
           <section key={t.id} className="rounded-xl border border-zinc-200 bg-white p-4" aria-label={`Tentative ${t.sequence_number}`}>
             <h2 className="mb-1 font-semibold text-zinc-900">Tentative {t.sequence_number}</h2>
             {t.transcript && <p className="mb-2 text-sm italic text-zinc-700">« {t.transcript} »</p>}
-            {t.audio_url && <audio controls src={mediaUrl(t.audio_url)} className="mb-3 w-full" />}
+            {t.audio_url && <audio controls preload="none" src={mediaUrl(t.audio_url)} className="mb-3 w-full" />}
             {t.analysis && <AnalysisCard analysis={t.analysis} overall={t.overall_score} />}
           </section>
         ))}

@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/features/auth/AuthProvider";
+import { PwaProvider } from "@/components/pwa/PwaProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,7 +17,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Lingora",
   description: "Learn. Speak. Grow.",
+  appleWebApp: { capable: true, title: "Lingora", statusBarStyle: "default" },
 };
+
+export const viewport: Viewport = { themeColor: "#4f46e5" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
@@ -24,7 +28,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="fr"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col"><AuthProvider>{children}</AuthProvider></body>
+      <body className="min-h-full flex flex-col"><AuthProvider>{children}</AuthProvider>
+        <PwaProvider /></body>
     </html>
   );
 }
