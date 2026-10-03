@@ -90,7 +90,7 @@ export default function ProgramsPage() {
           De nouveaux programmes arrivent bientôt. En attendant, entraînez-vous dans le Speaking Lab.
         </EmptyState>
       ) : (
-        <ul className="flex flex-col gap-4">
+        <ul className="grid gap-4 lg:grid-cols-2">
           {items.map(({ program, course_count, lesson_count }) => {
             const isRecommended = program.slug === recommended;
             return (

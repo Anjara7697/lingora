@@ -53,7 +53,7 @@ export default function SpeakingPage() {
       {error && <Notice tone="error">{error}</Notice>}
       {!items && !error && <p className="text-muted">Chargement…</p>}
 
-      <ul className="grid gap-3">
+      <ul className="grid gap-3 lg:grid-cols-2">
         {items?.map((s) => (
           <li key={s.id}>
             <Link href={`/speaking/${s.slug}`} className="flex items-center gap-3 rounded-lg bg-surface p-4 shadow-card">

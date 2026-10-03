@@ -90,13 +90,16 @@ function AvatarMenu() {
   );
 }
 
+/** Écrans de liste : sur grand écran ils s'étalent sur deux colonnes ; les autres restent en colonne de lecture. */
+const isWide = (pathname: string) => pathname === "/dashboard" || pathname === "/programs" || pathname === "/speaking";
+
 function TopBar({ pathname }: { pathname: string }) {
   const { status, user } = useAuth();
   const student = user?.role === "STUDENT";
   const unread = useUnread(student, pathname);
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-surface">
-      <div className="mx-auto flex h-14 w-full max-w-3xl items-center justify-between gap-4 pl-5 pr-4">
+      <div className={`mx-auto flex h-14 w-full ${isWide(pathname) ? "max-w-3xl lg:max-w-5xl" : "max-w-3xl"} items-center justify-between gap-4 pl-5 pr-4`}>
         <Link href={user ? homeFor(user.role) : "/"} aria-label="Lingora, accueil" className="text-ink">
           <Logo size={24} />
         </Link>
@@ -180,7 +183,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col">
       <TopBar pathname={pathname} />
-      <main className={`mx-auto w-full max-w-3xl flex-1 px-5 py-6 ${tabs ? "pb-[calc(6rem+var(--safe-bottom))] md:pb-8" : "pb-8"}`}>
+      <main className={`mx-auto w-full ${isWide(pathname) ? "max-w-3xl lg:max-w-5xl" : "max-w-3xl"} flex-1 px-5 py-6 ${tabs ? "pb-[calc(6rem+var(--safe-bottom))] md:pb-8" : "pb-8"}`}>
         {children}
       </main>
       {tabs && <BottomTabs pathname={pathname} />}

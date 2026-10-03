@@ -59,11 +59,13 @@ export default function DashboardPage() {
         <p className="text-[15px] text-muted">{minutes ? `Prêt pour ${minutes} minutes d'anglais ?` : "Prêt pour votre séance d'anglais ?"}</p>
       </header>
 
+      <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[3fr_2fr] lg:items-start lg:gap-6">
+      <div className="flex flex-col gap-5">
       {placement === null && (
         <section className={`${card} flex flex-col gap-3 p-5`}>
           <h2 className="font-display text-lg font-bold text-ink">Passez le test de niveau</h2>
           <p className="text-sm text-ink-2">25 questions, environ 10 minutes, pour estimer votre niveau.</p>
-          <Link href="/placement" className={buttonClass("primary")}>
+          <Link href="/placement" className={buttonClass("primary", "lg:w-fit lg:self-start lg:px-8")}>
             Commencer le test
           </Link>
         </section>
@@ -73,7 +75,7 @@ export default function DashboardPage() {
         <section className="flex flex-col gap-3 rounded-lg bg-ink-tint p-5">
           <h2 className="font-display text-lg font-bold text-ink">Commencez votre parcours</h2>
           <p className="text-sm text-ink-2">Choisissez un programme pour débuter l&apos;apprentissage.</p>
-          <Link href="/programs" className={buttonClass("primary")}>
+          <Link href="/programs" className={buttonClass("primary", "lg:w-fit lg:self-start lg:px-8")}>
             Voir les programmes
           </Link>
         </section>
@@ -96,7 +98,7 @@ export default function DashboardPage() {
             </div>
             <span className="text-[13px] font-semibold">{Math.round(progress)} %</span>
           </div>
-          <Link href={`/lessons/${next.lesson.id}`} className="relative inline-flex h-12 items-center justify-center gap-2 rounded-md bg-brand font-semibold text-ink">
+          <Link href={`/lessons/${next.lesson.id}`} className="relative inline-flex h-12 items-center justify-center gap-2 rounded-md bg-brand font-semibold text-ink lg:w-fit lg:self-start lg:px-8">
             Reprendre la leçon <ChevronRightIcon size={18} strokeWidth={2.4} />
           </Link>
         </section>
@@ -107,6 +109,8 @@ export default function DashboardPage() {
         </Notice>
       )}
 
+      </div>
+      <div className="flex flex-col gap-5">
       <div className={`grid gap-3 ${placement ? "grid-cols-2" : "grid-cols-1"}`}>
         {placement && (
           <Link href="/placement/result" className={`${card} flex min-h-[132px] flex-col gap-2.5 p-4`}>
@@ -162,6 +166,8 @@ export default function DashboardPage() {
         <span className="text-[13px] text-muted">{offlineCount}</span>
         <ChevronRightIcon size={16} strokeWidth={2.4} className="text-muted" />
       </Link>
+      </div>
+      </div>
     </div>
   );
 }
