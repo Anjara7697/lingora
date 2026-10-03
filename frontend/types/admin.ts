@@ -50,3 +50,33 @@ export interface Analytics {
   series: { date: string; new_students: number; exercises: number; speaking_attempts: number }[];
   definitions: Record<string, string>;
 }
+
+export interface BillingSummary {
+  generated_at: string;
+  revenue: { currency: string; total: string; last_30d: string; payments: number }[];
+  active_paid: number;
+  active_trials: number;
+  trials_started: number;
+  trials_converted: number;
+  payments_by_status: Record<PaymentStatus, number>;
+}
+
+export type PaymentStatus = "PENDING" | "SUCCESS" | "FAILED" | "REFUNDED" | "CANCELLED";
+
+export interface AdminPayment {
+  id: string;
+  student_id: string;
+  student_name: string;
+  student_email: string;
+  amount: string;
+  currency: string;
+  provider: string;
+  status: PaymentStatus;
+  created_at: string;
+  paid_at: string | null;
+}
+
+export interface PaymentPage {
+  items: AdminPayment[];
+  total: number;
+}

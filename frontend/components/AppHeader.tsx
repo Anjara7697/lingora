@@ -50,6 +50,9 @@ export function AppHeader() {
               <Link href="/admin/content" className={link}>
                 Contenu
               </Link>
+              <Link href="/admin/payments" className={link}>
+                Paiements
+              </Link>
               <Link href="/teacher" className={link}>
                 Élèves
               </Link>

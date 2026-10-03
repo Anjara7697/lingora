@@ -1,6 +1,16 @@
 import { apiAuth } from "@/lib/api/client";
 import type { Role } from "@/types/api";
-import type { AdminUser, Analytics, Roster, TeacherItem, UserPage, UserStatus } from "@/types/admin";
+import type {
+  AdminUser,
+  Analytics,
+  BillingSummary,
+  PaymentPage,
+  PaymentStatus,
+  Roster,
+  TeacherItem,
+  UserPage,
+  UserStatus,
+} from "@/types/admin";
 
 export const getAnalytics = () => apiAuth<Analytics>("/admin/analytics");
 
@@ -36,3 +46,13 @@ export const assignStudents = (teacherId: string, studentIds: string[]) =>
 
 export const unassignStudent = (teacherId: string, studentId: string) =>
   apiAuth<void>(`/admin/teachers/${teacherId}/students/${studentId}`, { method: "DELETE" });
+
+export const getBillingSummary = () => apiAuth<BillingSummary>("/admin/billing/summary");
+
+export function listPayments(p: { status?: PaymentStatus | ""; offset?: number; limit?: number }) {
+  const q = new URLSearchParams();
+  if (p.status) q.set("status", p.status);
+  q.set("limit", String(p.limit ?? 20));
+  q.set("offset", String(p.offset ?? 0));
+  return apiAuth<PaymentPage>(`/admin/payments?${q}`);
+}
