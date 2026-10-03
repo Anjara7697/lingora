@@ -62,6 +62,9 @@ export default function LoginPage() {
       <Button type="submit" disabled={submitting}>
         {submitting ? "Connexion…" : "Se connecter"}
       </Button>
+      <Link href="/forgot-password" className="text-center text-sm font-medium text-indigo-600 hover:underline">
+        Mot de passe oublié ?
+      </Link>
       <p className="text-center text-sm text-zinc-600">
         Pas encore de compte ?{" "}
         <Link href="/register" className="font-medium text-indigo-600 hover:underline">

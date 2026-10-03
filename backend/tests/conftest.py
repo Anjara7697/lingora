@@ -67,3 +67,23 @@ def client(db):
     app.dependency_overrides[get_db] = lambda: db
     yield TestClient(app)
     app.dependency_overrides.clear()
+
+
+@pytest.fixture(autouse=True)
+def _no_rate_limit(monkeypatch):
+    """Les tests enchaînent beaucoup d'inscriptions/connexions depuis la même « adresse » : limiteur coupé
+    par défaut, activé explicitement par les tests qui le vérifient (fixture `rate_limited`)."""
+    from app.core import config
+    from app.core.rate_limit import limiter
+
+    monkeypatch.setattr(config.settings, "rate_limit_enabled", False)
+    limiter.reset()
+    yield
+    limiter.reset()
+
+
+@pytest.fixture
+def rate_limited(monkeypatch):
+    from app.core import config
+
+    monkeypatch.setattr(config.settings, "rate_limit_enabled", True)

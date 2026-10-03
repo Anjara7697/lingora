@@ -7,25 +7,27 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 
 class AppError(Exception):
-    def __init__(self, status_code: int, code: str, message: str, details: list[dict] | None = None):
+    def __init__(self, status_code: int, code: str, message: str, details: list[dict] | None = None,
+                 headers: dict[str, str] | None = None):
         self.status_code, self.code, self.message, self.details = status_code, code, message, details
+        self.headers = headers
 
 
 def envelope(data=None, meta=None, error=None) -> dict:
     return {"data": data, "meta": meta or {}, "error": error}
 
 
-def _error(status: int, code: str, message: str, details=None) -> JSONResponse:
+def _error(status: int, code: str, message: str, details=None, headers=None) -> JSONResponse:
     err = {"code": code, "message": message}
     if details is not None:
         err["details"] = details
-    return JSONResponse(status_code=status, content=envelope(error=err))
+    return JSONResponse(status_code=status, content=envelope(error=err), headers=headers)
 
 
 def register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def _app_error(_: Request, exc: AppError):
-        return _error(exc.status_code, exc.code, exc.message, exc.details)
+        return _error(exc.status_code, exc.code, exc.message, exc.details, exc.headers)
 
     @app.exception_handler(StarletteHTTPException)
     async def _http_error(_: Request, exc: StarletteHTTPException):

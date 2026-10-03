@@ -4,6 +4,7 @@ from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
+from app.core.logging import configure_logging
 from app.modules.admin.router import router as admin_router
 from app.modules.assessment.router import router as assessment_router
 from app.modules.auth.router import router as auth_router
@@ -19,6 +20,7 @@ from app.shared.errors import register_error_handlers
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    configure_logging()
     settings.validate_for_runtime()
     yield
 
