@@ -45,7 +45,7 @@ function DemoCheckout() {
         <Button disabled={busy} onClick={() => answer(true)}>
           Simuler un paiement réussi
         </Button>
-        <Button disabled={busy} onClick={() => answer(false)} className="bg-zinc-700 hover:bg-zinc-800">
+        <Button disabled={busy} onClick={() => answer(false)} variant="secondary">
           Simuler un échec
         </Button>
       </div>

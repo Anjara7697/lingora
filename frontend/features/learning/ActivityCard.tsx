@@ -179,7 +179,7 @@ export function ActivityCard({ item, onResult }: Props) {
           </Button>
         )}
         {result && result.graded && !result.is_correct && (
-          <Button onClick={retry} className="bg-zinc-700 hover:bg-zinc-800">
+          <Button onClick={retry} variant="secondary">
             Réessayer
           </Button>
         )}

@@ -1,38 +1,34 @@
 import type { InputHTMLAttributes } from "react";
 
+export { Button } from "@/components/ui/Button";
+
 interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
   error?: string;
 }
 
+export const inputClass =
+  "h-12 w-full rounded-md bg-surface px-3.5 text-base text-ink shadow-[inset_0_0_0_1.5px_#cbd5e1] outline-none placeholder:text-muted focus:shadow-[inset_0_0_0_1.5px_#0f766e,0_0_0_4px_#e6f7f5] aria-[invalid=true]:shadow-[inset_0_0_0_1.5px_#b42318] disabled:bg-canvas";
+
 export function Field({ label, error, id, ...props }: FieldProps) {
   const fieldId = id ?? props.name;
   return (
-    <div className="flex flex-col gap-1">
-      <label htmlFor={fieldId} className="text-sm font-medium text-zinc-800">
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={fieldId} className="text-sm font-semibold text-ink">
         {label}
       </label>
       <input
         id={fieldId}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${fieldId}-error` : undefined}
-        className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base text-zinc-900 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 aria-[invalid=true]:border-red-500"
+        className={inputClass}
         {...props}
       />
       {error && (
-        <p id={`${fieldId}-error`} className="text-sm text-red-600">
+        <p id={`${fieldId}-error`} className="text-sm text-danger">
           {error}
         </p>
       )}
     </div>
-  );
-}
-
-export function Button({ className = "", ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  return (
-    <button
-      className={`rounded-lg bg-indigo-600 px-4 py-2.5 font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
-      {...props}
-    />
   );
 }

@@ -118,13 +118,13 @@ export default function UsersPage() {
 
       {page && page.total > PAGE && (
         <nav className="mt-4 flex items-center justify-between text-sm" aria-label="Pagination">
-          <Button onClick={() => setOffset(Math.max(0, offset - PAGE))} disabled={offset === 0} className="bg-zinc-700 hover:bg-zinc-800">
+          <Button onClick={() => setOffset(Math.max(0, offset - PAGE))} disabled={offset === 0} variant="secondary">
             Précédent
           </Button>
           <span className="text-zinc-600">
             {offset + 1}–{Math.min(offset + PAGE, page.total)} sur {page.total}
           </span>
-          <Button onClick={() => setOffset(offset + PAGE)} disabled={offset + PAGE >= page.total} className="bg-zinc-700 hover:bg-zinc-800">
+          <Button onClick={() => setOffset(offset + PAGE)} disabled={offset + PAGE >= page.total} variant="secondary">
             Suivant
           </Button>
         </nav>
